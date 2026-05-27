@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>⚽ World Cup 2026 – Dự Đoán</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #050c1a; font-family: 'Barlow', sans-serif; }
+    #root { min-height: 100vh; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #060e1d; }
+    ::-webkit-scrollbar-thumb { background: #1c3455; border-radius: 3px; }
+    input[type=number] { -moz-appearance: textfield; }
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    @keyframes sU { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fI { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes tIn { from { transform: translate(-50%, 10px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+    .mc:hover { border-color: #1e4070 !important; }
+    .tab-btn:hover { color: #c8ddff !important; }
+    .pill-btn:hover { opacity: 0.85; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback } = React;
+
+    const PHASES = {
+      group: { label: "Vòng Bảng",  short: "VB",   bet: 10000 },
+      r32:   { label: "Vòng 1/16",  short: "1/16", bet: 20000 },
+      r16:   { label: "Vòng 1/8",   short: "1/8",  bet: 20000 },
+      qf:    { label: "Tứ Kết",     short: "TK",   bet: 20000 },
+      sf:    { label: "Bán Kết",    short: "BK",   bet: 20000 },
+      third: { label: "Tranh HB3",  short: "HB3",  bet: 50000 },
+      final: { label: "Chung Kết",  short: "CK",   bet: 100000 },
+    };
+
+    const GROUPS = {
+      A: ["Mỹ","Panama","Uruguay","Bolivia"],
+      B: ["Mexico","Jamaica","Venezuela","Ecuador"],
+      C: ["Canada","Honduras","El Salvador","Maroc"],
+      D: ["Đức","Nhật Bản","Úc","Chile"],
+      E: ["Tây Ban Nha","Hà Lan","Serbia","Senegal"],
+      F: ["Pháp","Bỉ","Ukraine","Cameroon"],
+      G: ["Anh","Croatia","Thổ Nhĩ Kỳ","Saudi Arabia"],
+      H: ["Brazil","Colombia","Peru","Mali"],
+      I: ["Argentina","Paraguay","Iran","Nigeria"],
+      J: ["Hàn Quốc","Qatar","Iraq","Romania"],
+      K: ["Ý","Thụy Sĩ","Áo","Ai Cập"],
+      L: ["Bồ Đào Nha","Ba Lan","Đan Mạch","New Zealand"],
+    };
+
+    const MAX_SAME = 4;
+    const ADMIN_PWD = "admin2026";
+    const SK = "wc2026_betting_v1";
+
+    function genMatches() {
+      const ms = [];
+      let n = 1;
+      Object.entries(GROUPS).forEach(([grp, teams]) => {
+        for (let i = 0; i < 4; i++)
+          for (let j = i + 1; j < 4; j++)
+            ms.push({ id: `M${String(n++).padStart(3,"0")}`, phase:"group", group:grp, home:teams[i], away:teams[j], status:"upcoming", result:null, preds:[] });
+      });
+      [["r32",16],["r16",8],["qf",4],["sf",2],["third",1],["final",1]].forEach(([ph,c]) => {
+        for (let i = 0; i < c; i++)
+          ms.push({ id:`M${String(n++).padStart(3,"0")}`, phase:ph, group:null, home:"TBD", away:"TBD", status:"upcoming", result:null, preds:[] });
+      });
+      return ms;
+    }
+
+    const fmt = (n) => Math.round(n).toLocaleString("vi-VN") + "₫";
+
+    function calcStats(m) {
+      const bet = PHASES[m.phase].bet;
+      const pool = m.preds.length * bet;
+      const fund = Math.round(pool * 0.15);
+      const prize = Math.round(pool * 0.85);
+      const winners = m.result ? m.preds.filter(p => p.h === m.result.h && p.a === m.result.a) : [];
+      const perW = winners.length > 0 ? Math.round(prize / winners.length) : 0;
+      return { bet, pool, fund, prize, winners, perW };
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(SK);
+        if (raw) return JSON.parse(raw);
+      } catch {}
+      return null;
+    }
+
+    function saveData(d) {
+      try { localStorage.setItem(SK, JSON.stringify(d)); } catch {}
+    }
+
+    // ── MAIN APP ───────────────────────────────────────────────────────────
+    function App() {
+      const [data, setData] = useState(() => {
+        const saved = loadData();
+        return saved || { matches: genMatches(), fund: 0 };
+      });
+      const [name, setName] = useState(() => localStorage.getItem("wc2026_myname") || "");
+      const [editName, setEditName] = useState(!localStorage.getItem("wc2026_myname"));
+      const [tab, setTab] = useState("matches");
+      const [phase, setPhase] = useState("group");
+      const [grp, setGrp] = useState("A");
+      const [selMatch, setSelMatch] = useState(null);
+      const [pH, setPH] = useState("");
+      const [pA, setPA] = useState("");
+      const [toast, setToast] = useState(null);
+      const [adminUnlocked, setAdminUnlocked] = useState(false);
+      const [adminPwd, setAdminPwd] = useState("");
+      const [adminSel, setAdminSel] = useState(null);
+      const [rH, setRH] = useState("");
+      const [rA, setRA] = useState("");
+      const [editTeam, setEditTeam] = useState(null);
+      const [eH, setEH] = useState("");
+      const [eA, setEA] = useState("");
+      const [detailMatch, setDetailMatch] = useState(null);
+
+      const persist = useCallback((d) => {
+        setData(d);
+        saveData(d);
+      }, []);
+
+      const saveName = (n) => {
+        setName(n);
+        if (n.trim()) localStorage.setItem("wc2026_myname", n.trim());
+      };
+
+      const showT = useCallback((msg, t = "ok") => {
+        setToast({ msg, t });
+        setTimeout(() => setToast(null), 3000);
+      }, []);
+
+      function doPred() {
+        const nm = name.trim();
+        if (!nm) { showT("Nhập tên của bạn trước!", "err"); return; }
+        const h = parseInt(pH), a = parseInt(pA);
+        if (pH === "" || pA === "" || isNaN(h) || isNaN(a) || h < 0 || a < 0 || h > 20 || a > 20) {
+          showT("Tỷ số không hợp lệ!", "err"); return;
+        }
+        const m = data.matches.find(x => x.id === selMatch.id);
+        if (m.status === "finished") { showT("Trận đã kết thúc!", "err"); return; }
+        if (m.preds.some(p => p.name.toLowerCase() === nm.toLowerCase())) {
+          showT("Bạn đã dự đoán trận này rồi!", "err"); return;
+        }
+        if (m.preds.filter(p => p.h === h && p.a === a).length >= MAX_SAME) {
+          showT(`Tỷ số ${h}-${a} đã đủ ${MAX_SAME} người!`, "err"); return;
+        }
+        const newMs = data.matches.map(x =>
+          x.id === m.id ? { ...x, preds: [...x.preds, { name: nm, h, a, ts: Date.now() }] } : x
+        );
+        persist({ ...data, matches: newMs });
+        setSelMatch(null); setPH(""); setPA("");
+        showT(`✅ Đặt cược ${h}–${a} thành công!`);
+      }
+
+      function doResult() {
+        const h = parseInt(rH), a = parseInt(rA);
+        if (isNaN(h) || isNaN(a) || h < 0 || a < 0) { showT("Kết quả không hợp lệ!", "err"); return; }
+        const m = data.matches.find(x => x.id === adminSel.id);
+        const { fund } = calcStats({ ...m, result: { h, a } });
+        const newMs = data.matches.map(x => x.id === m.id ? { ...x, status: "finished", result: { h, a } } : x);
+        persist({ ...data, matches: newMs, fund: (data.fund || 0) + fund });
+        setAdminSel(null); setRH(""); setRA("");
+        showT(`✅ Kết quả ${h}–${a} đã lưu!`);
+      }
+
+      function doTeam() {
+        if (!eH.trim() || !eA.trim()) { showT("Nhập tên đội!", "err"); return; }
+        const newMs = data.matches.map(x => x.id === editTeam.id ? { ...x, home: eH.trim(), away: eA.trim() } : x);
+        persist({ ...data, matches: newMs });
+        setEditTeam(null);
+        showT("✅ Đã cập nhật tên đội!");
+      }
+
+      function doReset(m) {
+        const { fund: f } = calcStats(m);
+        const newMs = data.matches.map(x => x.id === m.id ? { ...x, status: "upcoming", result: null } : x);
+        persist({ ...data, matches: newMs, fund: Math.max(0, (data.fund || 0) - f) });
+        showT("Đã reset kết quả");
+      }
+
+      function doDeletePred(matchId, playerName) {
+        const newMs = data.matches.map(x =>
+          x.id === matchId ? { ...x, preds: x.preds.filter(p => p.name !== playerName) } : x
+        );
+        persist({ ...data, matches: newMs });
+        showT("Đã xóa dự đoán");
+      }
+
+      const board = useMemo(() => {
+        const s = {};
+        data.matches.forEach(m => {
+          if (m.status !== "finished" || !m.result) return;
+          const { bet, perW } = calcStats(m);
+          m.preds.forEach(p => {
+            if (!s[p.name]) s[p.name] = { name: p.name, bet: 0, won: 0, correct: 0, n: 0 };
+            s[p.name].bet += bet; s[p.name].n++;
+            if (p.h === m.result.h && p.a === m.result.a) { s[p.name].won += perW; s[p.name].correct++; }
+          });
+        });
+        return Object.values(s).map(x => ({ ...x, profit: x.won - x.bet })).sort((a, b) => b.profit - a.profit);
+      }, [data]);
+
+      const myPreds = useMemo(() => {
+        if (!name.trim()) return [];
+        const nm = name.toLowerCase().trim();
+        return data.matches
+          .filter(m => m.preds.some(p => p.name.toLowerCase() === nm))
+          .map(m => ({ m, p: m.preds.find(p => p.name.toLowerCase() === nm), st: m.status === "finished" ? calcStats(m) : null }));
+      }, [data, name]);
+
+      const filtered = useMemo(() => {
+        let ms = data.matches.filter(m => m.phase === phase);
+        if (phase === "group") ms = ms.filter(m => m.group === grp);
+        return ms;
+      }, [data, phase, grp]);
+
+      const totals = useMemo(() => ({
+        pool: data.matches.reduce((s, m) => s + m.preds.length * PHASES[m.phase].bet, 0),
+        players: new Set(data.matches.flatMap(m => m.preds.map(p => p.name))).size,
+        finished: data.matches.filter(m => m.status === "finished").length,
+        preds: data.matches.reduce((s, m) => s + m.preds.length, 0),
+        total: data.matches.length,
+      }), [data]);
+
+      // ── COLORS ──────────────────────────────────────────────────────────
+      const C = {
+        bg:"#050c1a", sur:"#091525", card:"#0c1c32", border:"#163050",
+        green:"#00d97e", gold:"#ffca28", red:"#ff5252", blue:"#4fc3f7",
+        orange:"#ff9800", text:"#ddeeff", muted:"#52708f", dim:"#1e3454",
+      };
+      const inp = { background:"#060f20", border:`1px solid ${C.border}`, borderRadius:"8px", color:C.text, padding:"10px 14px", fontFamily:"Barlow,sans-serif", fontSize:"14px", width:"100%", outline:"none" };
+      const btn = (c="green") => ({ background: c==="green"?C.green:c==="gold"?C.gold:c==="red"?C.red:c==="blue"?C.blue:C.dim, color:c==="dim"?C.muted:"#000", border:"none", borderRadius:"8px", padding:"9px 18px", cursor:"pointer", fontWeight:700, fontFamily:"Barlow,sans-serif", fontSize:"13px" });
+      const cardS = (extra={}) => ({ background:C.card, border:`1px solid ${C.border}`, borderRadius:"12px", padding:"16px", ...extra });
+      const overlay = { position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:"16px" };
+      const modal = { ...cardS(), maxWidth:"420px", width:"100%", animation:"sU 0.2s ease" };
+
+      // ── MATCH CARD ───────────────────────────────────────────────────────
+      function MatchCard({ m, adminMode=false }) {
+        const ms = calcStats(m);
+        const nm = name.trim().toLowerCase();
+        const myP = nm ? m.preds.find(p => p.name.toLowerCase() === nm) : null;
+        const isW = myP && m.result && myP.h === m.result.h && myP.a === m.result.a;
+        const done = m.status === "finished";
+        return (
+          <div className="mc"
+            style={{ ...cardS({ marginBottom:"10px", borderColor:isW?C.gold:myP?`${C.green}66`:C.border, cursor:!done&&!adminMode?"pointer":"default", animation:"fI 0.25s ease" }), transition:"border-color 0.15s" }}
+            onClick={() => !done && !adminMode && setSelMatch(m)}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"10px" }}>
+              <div style={{ display:"flex", gap:"6px", alignItems:"center", flexWrap:"wrap" }}>
+                <span style={{ background:C.dim, padding:"2px 9px", borderRadius:"5px", fontSize:"11px", color:C.muted, fontWeight:600 }}>
+                  {PHASES[m.phase].label}{m.group?` • Bảng ${m.group}`:`• ${m.id}`}
+                </span>
+                {done && <span style={{ background:`${C.green}20`, color:C.green, padding:"2px 9px", borderRadius:"5px", fontSize:"11px", fontWeight:700 }}>KT</span>}
+              </div>
+              <span style={{ color:C.gold, fontSize:"13px", fontWeight:700 }}>{fmt(PHASES[m.phase].bet)}</span>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", gap:"8px", marginBottom:"12px" }}>
+              <span style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"clamp(15px,3vw,21px)", lineHeight:1.1 }}>{m.home}</span>
+              <span style={{ textAlign:"center", fontFamily:"Bebas Neue,sans-serif", fontSize:done?"clamp(22px,4vw,30px)":"clamp(18px,3vw,24px)", color:done?C.gold:C.dim, padding:"0 6px", minWidth:"70px" }}>
+                {done?`${m.result.h} – ${m.result.a}`:"VS"}
+              </span>
+              <span style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"clamp(15px,3vw,21px)", lineHeight:1.1, textAlign:"right" }}>{m.away}</span>
+            </div>
+            <div style={{ display:"flex", gap:"14px", fontSize:"12px", color:C.muted, flexWrap:"wrap" }}>
+              <span>👥 {m.preds.length} dự đoán</span>
+              <span>💰 {fmt(ms.pool)}</span>
+              {done && ms.winners.length>0 && <span style={{ color:C.green }}>🏆 {ms.winners.length} đúng · {fmt(ms.perW)}/người</span>}
+              {done && ms.winners.length===0 && <span style={{ color:C.muted }}>Không ai đúng</span>}
+            </div>
+            {myP && (
+              <div style={{ marginTop:"10px", background:isW?`${C.gold}12`:`${C.green}10`, border:`1px solid ${isW?C.gold:C.green}30`, borderRadius:"8px", padding:"8px 12px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ color:C.muted, fontSize:"12px" }}>Dự đoán của bạn</span>
+                <div style={{ display:"flex", gap:"10px", alignItems:"center" }}>
+                  <span style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"20px", color:isW?C.gold:C.green }}>{myP.h} – {myP.a}</span>
+                  {isW && <span style={{ color:C.gold, fontWeight:700, fontSize:"13px" }}>+{fmt(ms.perW)} 🥇</span>}
+                  {done && !isW && <span style={{ color:C.red, fontSize:"12px" }}>Sai</span>}
+                </div>
+              </div>
+            )}
+            {adminMode && (
+              <div style={{ marginTop:"12px", display:"flex", gap:"8px", flexWrap:"wrap" }}>
+                {!done && <button style={btn("gold")} onClick={e=>{ e.stopPropagation(); setAdminSel(m); setRH(""); setRA(""); }}>📝 Nhập KQ</button>}
+                <button style={btn("blue")} onClick={e=>{ e.stopPropagation(); setEditTeam(m); setEH(m.home); setEA(m.away); }}>✏️ Sửa đội</button>
+                {done && <button style={{ ...btn("dim"), color:C.red }} onClick={e=>{ e.stopPropagation(); doReset(m); }}>🔄 Reset</button>}
+                <button style={{ ...btn("dim"), color:C.blue }} onClick={e=>{ e.stopPropagation(); setDetailMatch(m); }}>📊 Chi tiết</button>
+              </div>
+            )}
+            {!done && !myP && !adminMode && <div style={{ marginTop:"8px", color:C.green, fontSize:"12px", opacity:0.7 }}>Nhấn để đặt cược →</div>}
+          </div>
+        );
+      }
+
+      // ── TABS ─────────────────────────────────────────────────────────────
+      function PhaseFilter({ highlight }) {
+        return (
+          <div style={{ display:"flex", flexWrap:"wrap", gap:"6px", marginBottom:"14px" }}>
+            {Object.entries(PHASES).map(([ph,{label}]) => (
+              <button key={ph} className="pill-btn"
+                style={{ ...btn(ph===phase?highlight:"dim"), padding:"6px 12px", fontSize:"12px", color:ph===phase?"#000":C.muted }}
+                onClick={() => setPhase(ph)}>{label}</button>
+            ))}
+          </div>
+        );
+      }
+
+      function GroupFilter() {
+        return phase === "group" ? (
+          <div style={{ display:"flex", gap:"6px", marginBottom:"14px", flexWrap:"wrap" }}>
+            {Object.keys(GROUPS).map(g => (
+              <button key={g} className="pill-btn"
+                style={{ ...btn(g===grp?"green":"dim"), padding:"5px 11px", fontSize:"13px", color:g===grp?"#000":C.muted, minWidth:"38px" }}
+                onClick={() => setGrp(g)}>Bảng {g}</button>
+            ))}
+          </div>
+        ) : null;
+      }
+
+      function TabMatches() {
+        return (
+          <div>
+            <PhaseFilter highlight="green" />
+            <GroupFilter />
+            {filtered.length === 0
+              ? <div style={{ color:C.muted, textAlign:"center", padding:"50px 20px" }}>Không có trận nào</div>
+              : filtered.map(m => <MatchCard key={m.id} m={m} />)
+            }
+          </div>
+        );
+      }
+
+      function TabMine() {
+        if (!name.trim()) return (
+          <div style={{ color:C.muted, textAlign:"center", padding:"60px 20px" }}>
+            <div style={{ fontSize:"40px", marginBottom:"12px" }}>👤</div>
+            <div>Nhập tên của bạn ở trên để xem dự đoán</div>
+          </div>
+        );
+        if (myPreds.length === 0) return (
+          <div style={{ color:C.muted, textAlign:"center", padding:"60px 20px" }}>
+            <div style={{ fontSize:"40px", marginBottom:"12px" }}>📋</div>
+            <div>Bạn chưa có dự đoán nào</div>
+            <div style={{ marginTop:"8px", fontSize:"12px" }}>Đến tab Trận Đấu để đặt cược!</div>
+          </div>
+        );
+        const totalBet = myPreds.reduce((s,x) => s + PHASES[x.m.phase].bet, 0);
+        const finishedPreds = myPreds.filter(x => x.m.status === "finished");
+        const correct = finishedPreds.filter(x => x.p.h === x.m.result?.h && x.p.a === x.m.result?.a);
+        const totalWon = correct.reduce((s,x) => s + x.st.perW, 0);
+        return (
+          <div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))", gap:"10px", marginBottom:"16px" }}>
+              {[
+                { label:"Tổng đặt", value:fmt(totalBet), color:C.muted },
+                { label:"Tổng thắng", value:fmt(totalWon), color:C.green },
+                { label:"Lãi / lỗ", value:(totalWon-totalBet>=0?"+":"")+fmt(totalWon-totalBet), color:totalWon>=totalBet?C.green:C.red },
+                { label:"Đúng / Xong", value:`${correct.length}/${finishedPreds.length}`, color:C.gold },
+              ].map(({label,value,color}) => (
+                <div key={label} style={{ ...cardS({ textAlign:"center" }) }}>
+                  <div style={{ color:C.muted, fontSize:"11px", marginBottom:"4px", textTransform:"uppercase", letterSpacing:"0.8px" }}>{label}</div>
+                  <div style={{ color, fontSize:"15px", fontWeight:700 }}>{value}</div>
+                </div>
+              ))}
+            </div>
+            {myPreds.map(({m,p,st}) => {
+              const isW = st && p.h === m.result?.h && p.a === m.result?.a;
+              return (
+                <div key={m.id} style={{ ...cardS({ marginBottom:"10px", borderColor:isW?C.gold:C.border }) }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"8px" }}>
+                    <span style={{ color:C.muted, fontSize:"11px" }}>{PHASES[m.phase].label}{m.group?` · Bảng ${m.group}`:""}</span>
+                    {isW && <span style={{ color:C.gold, fontWeight:700 }}>🥇 +{fmt(st.perW)}</span>}
+                    {st && !isW && <span style={{ color:C.red, fontSize:"12px" }}>❌ Sai</span>}
+                    {!st && <span style={{ color:C.blue, fontSize:"11px" }}>Đang chờ</span>}
+                  </div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", marginBottom:"8px" }}>
+                    <span style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"18px" }}>{m.home}</span>
+                    <span style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"22px", color:m.result?C.gold:C.dim, padding:"0 10px", textAlign:"center" }}>{m.result?`${m.result.h}–${m.result.a}`:"?–?"}</span>
+                    <span style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"18px", textAlign:"right" }}>{m.away}</span>
+                  </div>
+                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:"12px", color:C.muted }}>
+                    <span>Dự đoán: <span style={{ color:isW?C.gold:C.green, fontWeight:700, fontFamily:"Bebas Neue,sans-serif", fontSize:"15px" }}>{p.h}–{p.a}</span></span>
+                    <span>Đặt: <span style={{ color:C.text }}>{fmt(PHASES[m.phase].bet)}</span></span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+
+      function TabBoard() {
+        if (board.length === 0) return (
+          <div style={{ color:C.muted, textAlign:"center", padding:"60px 20px" }}>
+            <div style={{ fontSize:"40px", marginBottom:"12px" }}>🏆</div>
+            <div>Chưa có kết quả nào</div>
+          </div>
+        );
+        return (
+          <div style={cardS()}>
+            <div style={{ color:C.muted, fontSize:"11px", marginBottom:"14px", textTransform:"uppercase", letterSpacing:"1px" }}>Bảng Xếp Hạng</div>
+            {board.map((p,i) => {
+              const isMe = name.trim() && p.name.toLowerCase() === name.toLowerCase().trim();
+              return (
+                <div key={p.name} style={{ display:"flex", alignItems:"center", padding:"11px 0", borderBottom:i<board.length-1?`1px solid ${C.border}`:undefined, background:isMe?`${C.green}08`:undefined, borderRadius:isMe?"6px":undefined, paddingLeft:isMe?"8px":undefined, paddingRight:isMe?"8px":undefined }}>
+                  <div style={{ width:"36px", fontFamily:"Bebas Neue,sans-serif", fontSize:"22px", color:i===0?C.gold:i===1?"#aaa":i===2?"#cd7f32":C.dim }}>{i+1}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:600, fontSize:"14px" }}>
+                      {i===0?"🥇 ":i===1?"🥈 ":i===2?"🥉 ":""}
+                      {p.name}
+                      {isMe && <span style={{ color:C.green, fontSize:"10px", border:`1px solid ${C.green}`, borderRadius:"4px", padding:"0 5px", marginLeft:"6px" }}>bạn</span>}
+                    </div>
+                    <div style={{ color:C.muted, fontSize:"11px", marginTop:"2px" }}>
+                      {p.n} trận · {p.correct} đúng ({p.n>0?Math.round((p.correct/p.n)*100):0}%)
+                    </div>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ color:p.profit>=0?C.green:C.red, fontWeight:700, fontSize:"15px" }}>
+                      {p.profit>=0?"+":""}{fmt(p.profit)}
+                    </div>
+                    <div style={{ color:C.muted, fontSize:"11px" }}>{fmt(p.won)} thắng</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+
+      function TabStats() {
+        const byPhase = Object.entries(PHASES).map(([ph,{label,bet}]) => {
+          const ms = data.matches.filter(m => m.phase===ph);
+          const done = ms.filter(m => m.status==="finished");
+          const pool = ms.reduce((s,m) => s + m.preds.length*bet, 0);
+          return { ph, label, bet, total:ms.length, done:done.length, pool, preds:ms.reduce((s,m) => s+m.preds.length,0) };
+        }).filter(x => x.preds>0||x.done>0);
+        return (
+          <div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))", gap:"10px", marginBottom:"16px" }}>
+              {[
+                { label:"Người chơi", value:totals.players, color:C.blue },
+                { label:"Tổng dự đoán", value:totals.preds, color:C.green },
+                { label:"Trận xong", value:`${totals.finished}/${totals.total}`, color:C.gold },
+                { label:"Tổng pool", value:fmt(totals.pool), color:C.orange },
+                { label:"Quỹ chung (15%)", value:fmt(data.fund||0), color:C.red },
+              ].map(({label,value,color}) => (
+                <div key={label} style={{ ...cardS({ textAlign:"center" }) }}>
+                  <div style={{ color:C.muted, fontSize:"11px", marginBottom:"4px", textTransform:"uppercase", letterSpacing:"0.7px" }}>{label}</div>
+                  <div style={{ color, fontSize:"clamp(13px,2vw,15px)", fontWeight:700 }}>{value}</div>
+                </div>
+              ))}
+            </div>
+            {byPhase.length>0 && (
+              <div style={{ ...cardS({ marginBottom:"16px" }) }}>
+                <div style={{ color:C.muted, fontSize:"11px", marginBottom:"14px", textTransform:"uppercase", letterSpacing:"1px" }}>Theo Vòng Đấu</div>
+                {byPhase.map((x,i) => (
+                  <div key={x.ph} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:i<byPhase.length-1?`1px solid ${C.border}`:undefined }}>
+                    <div>
+                      <div style={{ fontWeight:600, fontSize:"14px" }}>{x.label}</div>
+                      <div style={{ color:C.muted, fontSize:"11px", marginTop:"2px" }}>{x.done}/{x.total} trận · {x.preds} dự đoán</div>
+                    </div>
+                    <div style={{ textAlign:"right" }}>
+                      <div style={{ color:C.gold, fontWeight:700 }}>{fmt(x.pool)}</div>
+                      <div style={{ color:C.muted, fontSize:"11px" }}>{fmt(x.bet)}/trận</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {board.length>0 && (
+              <div style={cardS()}>
+                <div style={{ color:C.muted, fontSize:"11px", marginBottom:"12px", textTransform:"uppercase", letterSpacing:"1px" }}>Top Dự Đoán Đúng</div>
+                {[...board].sort((a,b)=>b.correct-a.correct).slice(0,5).map((p,i) => (
+                  <div key={p.name} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom:i<4?`1px solid ${C.border}`:undefined }}>
+                    <span style={{ color:C.text }}>{i+1}. {p.name}</span>
+                    <div style={{ display:"flex", gap:"12px" }}>
+                      <span style={{ color:C.green, fontWeight:700 }}>{p.correct} đúng</span>
+                      <span style={{ color:C.muted, fontSize:"12px" }}>{p.n>0?Math.round((p.correct/p.n)*100):0}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function TabAdmin() {
+        if (!adminUnlocked) return (
+          <div style={{ maxWidth:"300px", margin:"60px auto" }}>
+            <div style={{ ...cardS({ textAlign:"center" }) }}>
+              <div style={{ fontSize:"36px", marginBottom:"12px" }}>🔑</div>
+              <div style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"22px", color:C.gold, marginBottom:"16px" }}>Quản Trị Viên</div>
+              <input style={{ ...inp, textAlign:"center", letterSpacing:"4px", marginBottom:"12px" }} type="password" placeholder="Mật khẩu"
+                value={adminPwd} onChange={e=>setAdminPwd(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&(adminPwd===ADMIN_PWD?setAdminUnlocked(true):showT("Sai mật khẩu!","err"))} />
+              <button style={{ ...btn("gold"), width:"100%" }} onClick={() => adminPwd===ADMIN_PWD?setAdminUnlocked(true):showT("Sai mật khẩu!","err")}>Đăng nhập</button>
+              <div style={{ marginTop:"10px", color:C.muted, fontSize:"11px" }}>Mật khẩu mặc định: admin2026</div>
+            </div>
+          </div>
+        );
+        return (
+          <div>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"14px" }}>
+              <span style={{ color:C.gold, fontWeight:700 }}>🔑 Chế Độ Quản Trị</span>
+              <button style={{ ...btn("dim"), color:C.muted, padding:"6px 12px", fontSize:"12px" }} onClick={() => setAdminUnlocked(false)}>Đăng xuất</button>
+            </div>
+            <PhaseFilter highlight="gold" />
+            {phase==="group" && (
+              <div style={{ display:"flex", gap:"6px", marginBottom:"14px", flexWrap:"wrap" }}>
+                {Object.keys(GROUPS).map(g => (
+                  <button key={g} className="pill-btn"
+                    style={{ ...btn(g===grp?"gold":"dim"), padding:"5px 10px", fontSize:"12px", color:g===grp?"#000":C.muted }}
+                    onClick={() => setGrp(g)}>Bảng {g}</button>
+                ))}
+              </div>
+            )}
+            {filtered.map(m => <MatchCard key={m.id} m={m} adminMode={true} />)}
+          </div>
+        );
+      }
+
+      // ── LIVE MATCH ───────────────────────────────────────────────────────
+      const liveMatch = selMatch ? data.matches.find(x => x.id === selMatch.id) : null;
+      const liveDetail = detailMatch ? data.matches.find(x => x.id === detailMatch.id) : null;
+      const scoreCounts = liveMatch ? liveMatch.preds.reduce((acc,p) => { const k=`${p.h}-${p.a}`; acc[k]=(acc[k]||0)+1; return acc; }, {}) : {};
+
+      const TABS = [
+        { id:"matches", label:"⚽ Trận Đấu" },
+        { id:"mine",    label:"👤 Của Tôi" },
+        { id:"board",   label:"🏆 Xếp Hạng" },
+        { id:"stats",   label:"📊 Thống Kê" },
+        { id:"admin",   label:"🔑 Quản Trị" },
+      ];
+
+      return (
+        <div style={{ minHeight:"100vh", background:C.bg, color:C.text, fontFamily:"Barlow,sans-serif", fontSize:"14px" }}>
+          {/* HEADER */}
+          <div style={{ background:"#060f24", borderBottom:`2px solid #0e2a4a`, padding:"12px 16px" }}>
+            <div style={{ maxWidth:"900px", margin:"0 auto" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:"10px" }}>
+                <div>
+                  <div style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"clamp(22px,4vw,30px)", color:C.green, letterSpacing:"3px", lineHeight:1 }}>
+                    ⚽ World Cup 2026
+                  </div>
+                  <div style={{ color:C.muted, fontSize:"10px", letterSpacing:"2px", marginTop:"2px" }}>
+                    DỰ ĐOÁN · TỐI ĐA 4 NGƯỜI/TỶ SỐ · 85% THƯỞNG · 15% QUỸ CHUNG
+                  </div>
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+                  {editName || !name.trim() ? (
+                    <div style={{ display:"flex", gap:"6px" }}>
+                      <input style={{ ...inp, width:"150px", padding:"8px 12px" }} placeholder="Tên của bạn…"
+                        value={name} onChange={e => saveName(e.target.value)}
+                        onKeyDown={e => { if(e.key==="Enter"&&name.trim()) setEditName(false); }} />
+                      {name.trim() && <button style={{ ...btn("green"), padding:"8px 14px" }} onClick={() => setEditName(false)}>✓</button>}
+                    </div>
+                  ) : (
+                    <div style={{ background:`${C.green}15`, border:`1px solid ${C.green}40`, borderRadius:"8px", padding:"7px 14px", color:C.green, fontWeight:600, cursor:"pointer", fontSize:"14px" }}
+                      onClick={() => setEditName(true)}>
+                      👤 {name} <span style={{ opacity:0.6, fontSize:"12px" }}>✏️</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* TABS */}
+          <div style={{ background:C.sur, borderBottom:`1px solid ${C.border}`, overflowX:"auto" }}>
+            <div style={{ maxWidth:"900px", margin:"0 auto", display:"flex" }}>
+              {TABS.map(t => (
+                <button key={t.id} className="tab-btn" onClick={() => setTab(t.id)}
+                  style={{ padding:"12px 14px", cursor:"pointer", color:tab===t.id?C.green:C.muted, borderBottom:`2px solid ${tab===t.id?C.green:"transparent"}`, fontWeight:600, fontSize:"12px", whiteSpace:"nowrap", background:"transparent", border:"none", fontFamily:"Barlow,sans-serif", transition:"color 0.15s" }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* CONTENT */}
+          <div style={{ maxWidth:"900px", margin:"0 auto", padding:"16px" }}>
+            {tab==="matches" && <TabMatches />}
+            {tab==="mine"    && <TabMine />}
+            {tab==="board"   && <TabBoard />}
+            {tab==="stats"   && <TabStats />}
+            {tab==="admin"   && <TabAdmin />}
+          </div>
+
+          {/* PREDICTION MODAL */}
+          {liveMatch && (
+            <div style={overlay} onClick={() => { setSelMatch(null); setPH(""); setPA(""); }}>
+              <div style={modal} onClick={e => e.stopPropagation()}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"16px" }}>
+                  <div>
+                    <div style={{ color:C.muted, fontSize:"11px", marginBottom:"4px", textTransform:"uppercase", letterSpacing:"1px" }}>
+                      {PHASES[liveMatch.phase].label}{liveMatch.group?` · Bảng ${liveMatch.group}`:""}
+                    </div>
+                    <div style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"clamp(16px,3vw,22px)" }}>{liveMatch.home} vs {liveMatch.away}</div>
+                    <div style={{ color:C.gold, fontSize:"13px", marginTop:"2px" }}>Đặt cược: {fmt(PHASES[liveMatch.phase].bet)}</div>
+                  </div>
+                  <button style={{ background:"transparent", border:"none", color:C.muted, fontSize:"22px", cursor:"pointer", lineHeight:1 }} onClick={() => { setSelMatch(null); setPH(""); setPA(""); }}>×</button>
+                </div>
+                {Object.keys(scoreCounts).length>0 && (
+                  <div style={{ marginBottom:"16px", background:C.sur, borderRadius:"8px", padding:"12px" }}>
+                    <div style={{ color:C.muted, fontSize:"11px", marginBottom:"8px", textTransform:"uppercase", letterSpacing:"1px" }}>Tỷ số đã có người đặt</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:"6px" }}>
+                      {Object.entries(scoreCounts).map(([score,cnt]) => (
+                        <span key={score} style={{ background:cnt>=MAX_SAME?`${C.red}20`:`${C.green}15`, border:`1px solid ${cnt>=MAX_SAME?C.red:C.green}50`, color:cnt>=MAX_SAME?C.red:C.green, padding:"3px 10px", borderRadius:"20px", fontSize:"13px", fontWeight:700 }}>
+                          {score} ({cnt}/{MAX_SAME}){cnt>=MAX_SAME?" ⛔":""}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div style={{ marginBottom:"16px" }}>
+                  <div style={{ color:C.muted, fontSize:"11px", marginBottom:"10px", textTransform:"uppercase", letterSpacing:"1px" }}>Tỷ số dự đoán của bạn</div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:"10px", alignItems:"center" }}>
+                    <div>
+                      <div style={{ color:C.muted, fontSize:"11px", marginBottom:"5px", textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{liveMatch.home}</div>
+                      <input style={{ ...inp, textAlign:"center", fontSize:"32px", fontFamily:"Bebas Neue,sans-serif", padding:"10px" }} type="number" min="0" max="20" placeholder="0" value={pH} onChange={e => setPH(e.target.value)} />
+                    </div>
+                    <div style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"26px", color:C.dim, textAlign:"center", paddingTop:"20px" }}>—</div>
+                    <div>
+                      <div style={{ color:C.muted, fontSize:"11px", marginBottom:"5px", textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{liveMatch.away}</div>
+                      <input style={{ ...inp, textAlign:"center", fontSize:"32px", fontFamily:"Bebas Neue,sans-serif", padding:"10px" }} type="number" min="0" max="20" placeholder="0" value={pA} onChange={e => setPA(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+                {!name.trim() && <div style={{ color:C.red, fontSize:"12px", marginBottom:"12px" }}>⚠️ Nhập tên ở đầu trang trước khi đặt cược!</div>}
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px" }}>
+                  <button style={{ ...btn("dim"), color:C.muted }} onClick={() => { setSelMatch(null); setPH(""); setPA(""); }}>Hủy</button>
+                  <button style={btn("green")} onClick={doPred}>✅ Xác nhận đặt</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* RESULT MODAL */}
+          {adminSel && (
+            <div style={overlay} onClick={() => { setAdminSel(null); setRH(""); setRA(""); }}>
+              <div style={modal} onClick={e => e.stopPropagation()}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"16px" }}>
+                  <div style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"20px", color:C.gold }}>📝 Nhập Kết Quả</div>
+                  <button style={{ background:"transparent", border:"none", color:C.muted, fontSize:"22px", cursor:"pointer" }} onClick={() => { setAdminSel(null); setRH(""); setRA(""); }}>×</button>
+                </div>
+                <div style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"20px", textAlign:"center", marginBottom:"16px" }}>{adminSel.home} vs {adminSel.away}</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:"10px", alignItems:"center", marginBottom:"16px" }}>
+                  <input style={{ ...inp, textAlign:"center", fontSize:"32px", fontFamily:"Bebas Neue,sans-serif" }} type="number" min="0" placeholder="0" value={rH} onChange={e => setRH(e.target.value)} />
+                  <div style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"26px", color:C.dim, textAlign:"center" }}>—</div>
+                  <input style={{ ...inp, textAlign:"center", fontSize:"32px", fontFamily:"Bebas Neue,sans-serif" }} type="number" min="0" placeholder="0" value={rA} onChange={e => setRA(e.target.value)} />
+                </div>
+                {rH!==""&&rA!==""&&!isNaN(parseInt(rH))&&!isNaN(parseInt(rA))&&(()=>{
+                  const h=parseInt(rH),a=parseInt(rA);
+                  const ms=calcStats({...adminSel,result:{h,a}});
+                  return (
+                    <div style={{ background:`${C.green}10`, border:`1px solid ${C.green}20`, borderRadius:"8px", padding:"10px", marginBottom:"14px", fontSize:"12px", color:C.muted, lineHeight:1.6 }}>
+                      Pool: <b style={{color:C.text}}>{fmt(ms.pool)}</b> → Thưởng: <b style={{color:C.green}}>{fmt(ms.prize)}</b> + Quỹ: <b style={{color:C.red}}>{fmt(ms.fund)}</b>
+                      <br/>Người đúng: <b style={{color:C.gold}}>{ms.winners.length} người</b>
+                      {ms.perW>0&&<> · Mỗi người: <b style={{color:C.gold}}>{fmt(ms.perW)}</b></>}
+                    </div>
+                  );
+                })()}
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px" }}>
+                  <button style={{ ...btn("dim"), color:C.muted }} onClick={() => { setAdminSel(null); setRH(""); setRA(""); }}>Hủy</button>
+                  <button style={btn("gold")} onClick={doResult}>💾 Lưu kết quả</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* EDIT TEAM MODAL */}
+          {editTeam && (
+            <div style={overlay} onClick={() => setEditTeam(null)}>
+              <div style={{ ...modal, maxWidth:"360px" }} onClick={e => e.stopPropagation()}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"16px" }}>
+                  <div style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"20px", color:C.blue }}>✏️ Sửa Tên Đội</div>
+                  <button style={{ background:"transparent", border:"none", color:C.muted, fontSize:"22px", cursor:"pointer" }} onClick={() => setEditTeam(null)}>×</button>
+                </div>
+                <div style={{ marginBottom:"12px" }}>
+                  <div style={{ color:C.muted, fontSize:"11px", marginBottom:"6px" }}>Đội chủ nhà</div>
+                  <input style={inp} value={eH} onChange={e => setEH(e.target.value)} placeholder="Tên đội 1" />
+                </div>
+                <div style={{ marginBottom:"16px" }}>
+                  <div style={{ color:C.muted, fontSize:"11px", marginBottom:"6px" }}>Đội khách</div>
+                  <input style={inp} value={eA} onChange={e => setEA(e.target.value)} placeholder="Tên đội 2" />
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px" }}>
+                  <button style={{ ...btn("dim"), color:C.muted }} onClick={() => setEditTeam(null)}>Hủy</button>
+                  <button style={btn("blue")} onClick={doTeam}>💾 Lưu</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* DETAIL MODAL */}
+          {liveDetail && (
+            <div style={overlay} onClick={() => setDetailMatch(null)}>
+              <div style={{ ...modal, maxWidth:"480px", maxHeight:"85vh", overflowY:"auto" }} onClick={e => e.stopPropagation()}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"16px" }}>
+                  <div style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"20px" }}>📊 Chi Tiết Trận</div>
+                  <button style={{ background:"transparent", border:"none", color:C.muted, fontSize:"22px", cursor:"pointer" }} onClick={() => setDetailMatch(null)}>×</button>
+                </div>
+                {(()=>{
+                  const ms=calcStats(liveDetail);
+                  return (
+                    <>
+                      <div style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"24px", textAlign:"center", marginBottom:"14px" }}>
+                        {liveDetail.home} {liveDetail.result?`${liveDetail.result.h} – ${liveDetail.result.a}`:"vs"} {liveDetail.away}
+                      </div>
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", marginBottom:"16px" }}>
+                        {[
+                          {l:"Tổng pool",v:fmt(ms.pool),c:C.gold},
+                          {l:"Quỹ thưởng (85%)",v:fmt(ms.prize),c:C.green},
+                          {l:"Quỹ chung (15%)",v:fmt(ms.fund),c:C.red},
+                          {l:"Người đúng",v:ms.winners.length,c:C.blue},
+                        ].map(({l,v,c})=>(
+                          <div key={l} style={{ background:C.sur, borderRadius:"8px", padding:"10px", textAlign:"center" }}>
+                            <div style={{ color:C.muted, fontSize:"11px", marginBottom:"4px" }}>{l}</div>
+                            <div style={{ color:c, fontWeight:700, fontSize:"14px" }}>{v}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {ms.perW>0&&(
+                        <div style={{ background:`${C.gold}12`, border:`1px solid ${C.gold}30`, borderRadius:"8px", padding:"10px", textAlign:"center", marginBottom:"16px", color:C.gold, fontWeight:700, fontSize:"15px" }}>
+                          +{fmt(ms.perW)} cho mỗi người dự đoán đúng
+                        </div>
+                      )}
+                      <div style={{ color:C.muted, fontSize:"11px", marginBottom:"10px", textTransform:"uppercase", letterSpacing:"1px" }}>
+                        Tất cả dự đoán ({liveDetail.preds.length})
+                      </div>
+                      {liveDetail.preds.length===0&&<div style={{ color:C.dim, textAlign:"center", padding:"20px" }}>Chưa có dự đoán</div>}
+                      {liveDetail.preds.map((p,i)=>{
+                        const isW=liveDetail.result&&p.h===liveDetail.result.h&&p.a===liveDetail.result.a;
+                        return (
+                          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:i<liveDetail.preds.length-1?`1px solid ${C.border}`:undefined }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+                              {isW&&<span>🥇</span>}
+                              <span style={{ fontWeight:600 }}>{p.name}</span>
+                            </div>
+                            <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                              <span style={{ fontFamily:"Bebas Neue,sans-serif", fontSize:"18px", color:isW?C.gold:C.text }}>{p.h}–{p.a}</span>
+                              {isW&&<span style={{ color:C.gold, fontWeight:700, fontSize:"12px" }}>+{fmt(ms.perW)}</span>}
+                              {adminUnlocked&&(
+                                <button style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:"5px", color:C.red, fontSize:"11px", cursor:"pointer", padding:"2px 7px" }}
+                                  onClick={()=>{ doDeletePred(liveDetail.id,p.name); setDetailMatch({...liveDetail,preds:liveDetail.preds.filter(x=>x.name!==p.name)}); }}>
+                                  xóa
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* TOAST */}
+          {toast && (
+            <div style={{ position:"fixed", bottom:"24px", left:"50%", transform:"translateX(-50%)", background:toast.t==="err"?C.red:C.green, color:"#000", padding:"10px 22px", borderRadius:"30px", fontWeight:700, fontSize:"13px", zIndex:2000, animation:"tIn 0.2s ease", whiteSpace:"nowrap", boxShadow:"0 6px 24px rgba(0,0,0,0.5)" }}>
+              {toast.msg}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
