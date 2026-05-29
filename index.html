@@ -6,24 +6,31 @@
   <title>⚽ World Cup 2026 – Dự Đoán Tỉ Số</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet"/>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;background:#050c1a;font-family:'Barlow',sans-serif}
+    html,body{height:100%;background:#050c1a;font-family:'Times New Roman',Times,serif}
     #root{min-height:100vh}
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#060e1d}::-webkit-scrollbar-thumb{background:#1c3455;border-radius:3px}
+    input,button,select,textarea{font-family:'Times New Roman',Times,serif}
     input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+    /* Fix autocomplete yellow bg */
+    input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus{
+      -webkit-box-shadow:0 0 0 1000px #060f20 inset!important;
+      -webkit-text-fill-color:#ddeeff!important;
+      caret-color:#ddeeff;
+    }
     @keyframes sU{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
     @keyframes fI{from{opacity:0}to{opacity:1}}
     @keyframes tIn{from{transform:translate(-50%,10px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
     @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,82,82,.55)}50%{box-shadow:0 0 0 8px rgba(255,82,82,0)}}
     @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,152,0,.35)}50%{box-shadow:0 0 18px 5px rgba(255,152,0,.12)}}
     .mc:hover{border-color:#1e4070!important}.tab-btn:hover{color:#c8ddff!important}.pill:hover{opacity:.82}.today-card{animation:glow 2.6s ease-in-out infinite}
-    table{border-collapse:collapse;width:100%}th,td{padding:8px 10px;text-align:left;font-size:12px}
+    table{border-collapse:collapse;width:100%}th,td{padding:8px 10px;text-align:left;font-size:13px;font-family:'Times New Roman',Times,serif}
     th{font-weight:700;text-transform:uppercase;letter-spacing:.6px}
   </style>
 </head>
@@ -32,22 +39,35 @@
 const {useState,useEffect,useMemo,useCallback,useRef}=React;
 
 /* ══════════════════ FLAGS MAP ══════════════════════════════════════════════ */
-const FLAGS={
-  "Mỹ":"🇺🇸","Panama":"🇵🇦","Uruguay":"🇺🇾","Bolivia":"🇧🇴",
-  "Mexico":"🇲🇽","Jamaica":"🇯🇲","Venezuela":"🇻🇪","Ecuador":"🇪🇨",
-  "Canada":"🇨🇦","Honduras":"🇭🇳","El Salvador":"🇸🇻","Maroc":"🇲🇦",
-  "Đức":"🇩🇪","Nhật Bản":"🇯🇵","Úc":"🇦🇺","Chile":"🇨🇱",
-  "Tây Ban Nha":"🇪🇸","Hà Lan":"🇳🇱","Serbia":"🇷🇸","Senegal":"🇸🇳",
-  "Pháp":"🇫🇷","Bỉ":"🇧🇪","Ukraine":"🇺🇦","Cameroon":"🇨🇲",
-  "Anh":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croatia":"🇭🇷","Thổ Nhĩ Kỳ":"🇹🇷","Saudi Arabia":"🇸🇦",
-  "Brazil":"🇧🇷","Colombia":"🇨🇴","Peru":"🇵🇪","Mali":"🇲🇱",
-  "Argentina":"🇦🇷","Paraguay":"🇵🇾","Iran":"🇮🇷","Nigeria":"🇳🇬",
-  "Hàn Quốc":"🇰🇷","Qatar":"🇶🇦","Iraq":"🇮🇶","Romania":"🇷🇴",
-  "Ý":"🇮🇹","Thụy Sĩ":"🇨🇭","Áo":"🇦🇹","Ai Cập":"🇪🇬",
-  "Bồ Đào Nha":"🇵🇹","Ba Lan":"🇵🇱","Đan Mạch":"🇩🇰","New Zealand":"🇳🇿",
-  "TBD":"🏳️",
+// country code → ISO 3166-1 alpha-2 for flagcdn.com
+const FLAG_CODES={
+  "Mỹ":"us","Panama":"pa","Uruguay":"uy","Bolivia":"bo",
+  "Mexico":"mx","Jamaica":"jm","Venezuela":"ve","Ecuador":"ec",
+  "Canada":"ca","Honduras":"hn","El Salvador":"sv","Maroc":"ma",
+  "Đức":"de","Nhật Bản":"jp","Úc":"au","Chile":"cl",
+  "Tây Ban Nha":"es","Hà Lan":"nl","Serbia":"rs","Senegal":"sn",
+  "Pháp":"fr","Bỉ":"be","Ukraine":"ua","Cameroon":"cm",
+  "Anh":"gb-eng","Croatia":"hr","Thổ Nhĩ Kỳ":"tr","Saudi Arabia":"sa",
+  "Brazil":"br","Colombia":"co","Peru":"pe","Mali":"ml",
+  "Argentina":"ar","Paraguay":"py","Iran":"ir","Nigeria":"ng",
+  "Hàn Quốc":"kr","Qatar":"qa","Iraq":"iq","Romania":"ro",
+  "Ý":"it","Thụy Sĩ":"ch","Áo":"at","Ai Cập":"eg",
+  "Bồ Đào Nha":"pt","Ba Lan":"pl","Đan Mạch":"dk","New Zealand":"nz",
 };
-const FL=name=>FLAGS[name]||"🏳️";
+// Return a small inline flag image element; falls back to neutral flag
+function FL({name,size=20}){
+  const code=FLAG_CODES[name];
+  if(!code)return <span style={{fontSize:size+"px",lineHeight:1}}>🏳️</span>;
+  return(
+    <img
+      src={`https://flagcdn.com/w40/${code}.png`}
+      alt={name}
+      title={name}
+      style={{width:(size*1.4)+"px",height:size+"px",objectFit:"cover",borderRadius:"3px",verticalAlign:"middle",display:"inline-block",flexShrink:0,boxShadow:"0 1px 3px rgba(0,0,0,0.4)"}}
+      onError={e=>{e.target.style.display="none";}}
+    />
+  );
+}
 
 /* ══════════════════ CONSTANTS ══════════════════════════════════════════════ */
 const PHASES={
@@ -113,7 +133,17 @@ function genMatches(){
 }
 
 /* ══════════════════ HELPERS ════════════════════════════════════════════════ */
-const fmt=n=>Math.round(n).toLocaleString("vi-VN")+"₫";
+// 1 Xu = 1,000₫  →  10,000₫ = 10 Xu
+const VND_PER_XU=1000;
+const toXu=vnd=>vnd/VND_PER_XU;
+const fmt=vnd=>{
+  const xu=toXu(Math.round(vnd));
+  // Show integer if whole, else 1 decimal
+  const s=Number.isInteger(xu)?xu.toLocaleString("vi-VN"):(xu).toLocaleString("vi-VN",{minimumFractionDigits:1,maximumFractionDigits:1});
+  return s+" Xu";
+};
+// For Excel export: raw VND
+const fmtVND=n=>Math.round(n);
 const fmtDT=iso=>iso?new Date(iso).toLocaleString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):null;
 const fmtDate=iso=>iso?new Date(iso).toLocaleDateString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh",day:"2-digit",month:"2-digit",year:"numeric"}):null;
 const vnDate=t=>new Date(t.toLocaleString("en-US",{timeZone:"Asia/Ho_Chi_Minh"}));
@@ -379,8 +409,8 @@ function App(){
 
   /* ══════════════════ STYLES ═════════════════════════════════════════════ */
   const C={bg:"#050c1a",sur:"#091525",card:"#0c1c32",border:"#163050",green:"#00d97e",gold:"#ffca28",red:"#ff5252",blue:"#4fc3f7",orange:"#ff9800",text:"#ddeeff",muted:"#52708f",dim:"#1e3454",purple:"#b388ff"};
-  const IS=(x={})=>({background:"#060f20",border:`1px solid ${C.border}`,borderRadius:"8px",color:C.text,padding:"10px 14px",fontFamily:"Barlow,sans-serif",fontSize:"14px",width:"100%",outline:"none",...x});
-  const BT=(c="green",x={})=>({background:c==="green"?C.green:c==="gold"?C.gold:c==="red"?C.red:c==="blue"?C.blue:c==="orange"?C.orange:c==="purple"?C.purple:C.dim,color:c==="dim"?C.muted:"#000",border:"none",borderRadius:"8px",padding:"9px 18px",cursor:"pointer",fontWeight:700,fontFamily:"Barlow,sans-serif",fontSize:"13px",...x});
+  const IS=(x={})=>({background:"#060f20",border:`1px solid ${C.border}`,borderRadius:"8px",color:C.text,padding:"10px 14px",fontFamily:"'Times New Roman',Times,serif",fontSize:"14px",width:"100%",outline:"none",...x});
+  const BT=(c="green",x={})=>({background:c==="green"?C.green:c==="gold"?C.gold:c==="red"?C.red:c==="blue"?C.blue:c==="orange"?C.orange:c==="purple"?C.purple:C.dim,color:c==="dim"?C.muted:"#000",border:"none",borderRadius:"8px",padding:"9px 18px",cursor:"pointer",fontWeight:700,fontFamily:"'Times New Roman',Times,serif",fontSize:"13px",...x});
   const CS=(x={})=>({background:C.card,border:`1px solid ${C.border}`,borderRadius:"12px",padding:"16px",...x});
   const OV={position:"fixed",inset:0,background:"rgba(0,0,0,.88)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:"16px"};
   const MD=(x={})=>({...CS(),maxWidth:"440px",width:"100%",animation:"sU .2s ease",...x});
@@ -490,14 +520,14 @@ function App(){
         </div>}
 
         <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",gap:"8px",marginBottom:"10px"}}>
-          <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(13px,3vw,20px)",lineHeight:1.1}}>
-            {FL(m.home)} {m.home}
+          <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(13px,3vw,20px)",lineHeight:1.1,display:"flex",alignItems:"center",gap:"5px"}}>
+            <FL name={m.home} size={22}/> {m.home}
           </span>
           <span style={{textAlign:"center",fontFamily:"Bebas Neue,sans-serif",fontSize:done?"clamp(22px,4vw,30px)":"clamp(18px,3vw,24px)",color:done?C.gold:C.dim,padding:"0 6px",minWidth:"70px"}}>
             {done?`${m.result.h} – ${m.result.a}`:"VS"}
           </span>
-          <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(13px,3vw,20px)",lineHeight:1.1,textAlign:"right"}}>
-            {m.away} {FL(m.away)}
+          <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(13px,3vw,20px)",lineHeight:1.1,textAlign:"right",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:"5px"}}>
+            {m.away} <FL name={m.away} size={22}/>
           </span>
         </div>
 
@@ -667,7 +697,7 @@ function App(){
             <div style={{color:C.orange,fontWeight:700,fontSize:"13px",marginBottom:"10px"}}>🔥 TRẬN HÔM NAY ({todayMs.length})</div>
             {todayMs.map(m=>(
               <div key={m.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:`1px solid ${C.border}`,cursor:"pointer"}} onClick={()=>openPred(m)}>
-                <div style={{flex:1,fontFamily:"Bebas Neue,sans-serif",fontSize:"15px"}}>{FL(m.home)} {m.home} <span style={{color:C.dim,margin:"0 5px"}}>VS</span> {m.away} {FL(m.away)}</div>
+                <div style={{flex:1,fontFamily:"Bebas Neue,sans-serif",fontSize:"15px"}}><FL name={m.home} size={18}/> {m.home} <span style={{color:C.dim,margin:"0 5px"}}>VS</span> {m.away} <FL name={m.away} size={18}/></div>
                 <div style={{textAlign:"right"}}>
                   {m.kickoff&&<div style={{color:isSoon(m.kickoff)?C.red:C.orange,fontSize:"12px",fontWeight:700}}>{fmtDT(m.kickoff)}</div>}
                   <div style={{color:C.muted,fontSize:"11px"}}>{PHASES[m.phase].label} · {fmt(PHASES[m.phase].bet)}</div>
@@ -746,9 +776,9 @@ function App(){
                 </div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",marginBottom:"7px"}}>
-                <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"17px"}}>{FL(m.home)} {m.home}</span>
+                <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"17px",display:"flex",alignItems:"center",gap:"5px"}}><FL name={m.home} size={18}/> {m.home}</span>
                 <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"21px",color:m.result?C.gold:C.dim,padding:"0 10px",textAlign:"center"}}>{m.result?`${m.result.h}–${m.result.a}`:"?–?"}</span>
-                <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"17px",textAlign:"right"}}>{m.away} {FL(m.away)}</span>
+                <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"17px",textAlign:"right",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:"5px"}}>{m.away} <FL name={m.away} size={18}/></span>
               </div>
               {p&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"12px",color:C.muted,flexWrap:"wrap",gap:"6px"}}>
                 <span>Dự đoán: <b style={{color:isW?C.gold:C.green,fontFamily:"Bebas Neue,sans-serif",fontSize:"16px"}}>{p.h}–{p.a}</b>
@@ -1028,38 +1058,134 @@ function App(){
     if(!loginModal)return null;
     const{mode}=loginModal;
     const isForce=mode==="forcepwd", isChange=mode==="changepwd", isLogin=mode==="login";
+
+    // Registered player names for autocomplete datalist
+    const knownNames=Object.values(players).map(p=>p.name);
+
+    function closeModal(){
+      if(isForce)return; // force-change cannot be dismissed
+      setLoginModal(null);setLPwd("");setLPwd2("");setLErr("");
+    }
+
+    // Shared input style — large, readable, no autocomplete artifacts
+    const INP=(extra={})=>({
+      background:"#0a1929",
+      border:`2px solid ${C.border}`,
+      borderRadius:"10px",
+      color:"#ffffff",
+      padding:"13px 16px",
+      fontFamily:"'Times New Roman',Times,serif",
+      fontSize:"16px",
+      width:"100%",
+      outline:"none",
+      transition:"border-color .15s",
+      ...extra,
+    });
+    const LABEL={color:C.muted,fontSize:"13px",fontWeight:600,marginBottom:"6px",display:"block"};
+
     return(
-      <div style={OV} onClick={()=>{if(!isForce){setLoginModal(null);setLPwd("");setLPwd2("");setLErr("");}}}>
-        <div style={MD({maxWidth:"370px"})} onClick={e=>e.stopPropagation()}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
-            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"22px",color:isForce||isChange?C.blue:C.green}}>
-              {isForce?"🔑 Đổi Mật Khẩu Lần Đầu":isChange?"🔑 Đổi Mật Khẩu":"👤 Đăng Nhập"}
+      <div style={OV} onClick={closeModal}>
+        <div style={MD({maxWidth:"400px",padding:"24px"})} onClick={e=>e.stopPropagation()}>
+
+          {/* Header */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"26px",color:isForce||isChange?C.blue:C.green,letterSpacing:"1px"}}>
+              {isForce?"🔑 ĐỔI MẬT KHẨU LẦN ĐẦU":isChange?"🔑 ĐỔI MẬT KHẨU":"👤 ĐĂNG NHẬP"}
             </div>
-            {!isForce&&<button style={{background:"transparent",border:"none",color:C.muted,fontSize:"22px",cursor:"pointer"}} onClick={()=>{setLoginModal(null);setLPwd("");setLPwd2("");setLErr("");}}>×</button>}
+            {!isForce&&(
+              <button style={{background:"transparent",border:"none",color:C.muted,fontSize:"28px",cursor:"pointer",lineHeight:1,padding:"0 4px"}} onClick={closeModal}>×</button>
+            )}
           </div>
-          {isForce&&<div style={{background:C.gold+"10",border:`1px solid ${C.gold}33`,borderRadius:"8px",padding:"10px 12px",marginBottom:"14px",fontSize:"12px",color:C.muted,lineHeight:1.6}}>
-            ⚠️ Bạn đang dùng mật khẩu mặc định <b style={{color:C.gold}}>{DEFAULT_PWD}</b>.<br/>
-            Hãy đặt <b style={{color:C.text}}>mật khẩu riêng</b> để bảo vệ tài khoản <b style={{color:C.text}}>{loginModal.name}</b>.
-          </div>}
-          {isLogin&&<div style={{marginBottom:"11px"}}>
-            <div style={{color:C.muted,fontSize:"11px",marginBottom:"5px"}}>Tên của bạn</div>
-            <input style={IS()} placeholder="Nhập tên (VD: Nguyễn Văn A)" value={lName} onChange={e=>{setLName(e.target.value);setLErr("");}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
-            <div style={{color:C.muted,fontSize:"11px",marginTop:"4px"}}>Lần đầu dùng mật khẩu mặc định: <b style={{color:C.gold}}>{DEFAULT_PWD}</b></div>
-          </div>}
-          <div style={{marginBottom:"11px"}}>
-            <div style={{color:C.muted,fontSize:"11px",marginBottom:"5px"}}>{isLogin?"Mật khẩu":"Mật khẩu mới"}</div>
-            <input style={{...IS(),letterSpacing:"2px"}} type="password" placeholder={isLogin?"Nhập mật khẩu":"Mật khẩu mới (≥ 4 ký tự)"} value={lPwd}
-              onChange={e=>{setLPwd(e.target.value);setLErr("");}} onKeyDown={e=>e.key==="Enter"&&(isLogin?handleLogin():isForce?handleForcePwd():handleChangePwd())}/>
+
+          {/* Force-change banner */}
+          {isForce&&(
+            <div style={{background:C.gold+"15",border:`1px solid ${C.gold}44`,borderRadius:"10px",padding:"12px 14px",marginBottom:"18px",fontSize:"13px",color:C.muted,lineHeight:1.7}}>
+              ⚠️ Bạn đang dùng mật khẩu mặc định <b style={{color:C.gold,fontSize:"15px"}}>{DEFAULT_PWD}</b>.<br/>
+              Hãy đặt mật khẩu riêng để bảo vệ tài khoản <b style={{color:C.text}}>{loginModal.name}</b>.
+            </div>
+          )}
+
+          {/* Name field — only for login */}
+          {isLogin&&(
+            <div style={{marginBottom:"16px"}}>
+              <label style={LABEL}>Tên của bạn</label>
+              {/* datalist provides autocomplete suggestions without forcing a selection */}
+              <datalist id="wc-names">
+                {knownNames.map(n=><option key={n} value={n}/>)}
+              </datalist>
+              <input
+                id="wc-login-name"
+                list="wc-names"
+                style={INP()}
+                placeholder="Nhập tên đầy đủ của bạn…"
+                value={lName}
+                autoComplete="name"
+                autoFocus
+                onChange={e=>{setLName(e.target.value);setLErr("");}}
+                onKeyDown={e=>{ if(e.key==="Enter"){e.preventDefault();document.getElementById("wc-login-pwd")?.focus();} }}
+              />
+              <div style={{color:C.muted,fontSize:"12px",marginTop:"6px"}}>
+                💡 Lần đầu đăng nhập dùng mật khẩu mặc định: <b style={{color:C.gold,fontSize:"13px"}}>{DEFAULT_PWD}</b>
+              </div>
+            </div>
+          )}
+
+          {/* Password field */}
+          <div style={{marginBottom:"16px"}}>
+            <label style={LABEL}>{isLogin?"Mật khẩu":"Mật khẩu mới (tối thiểu 4 ký tự)"}</label>
+            <input
+              id="wc-login-pwd"
+              type="password"
+              style={INP({letterSpacing:"3px",fontSize:"18px"})}
+              placeholder={isLogin?"Nhập mật khẩu":"Mật khẩu mới…"}
+              value={lPwd}
+              autoComplete={isLogin?"current-password":"new-password"}
+              autoFocus={isForce||isChange}
+              onChange={e=>{setLPwd(e.target.value);setLErr("");}}
+              onKeyDown={e=>{
+                if(e.key==="Enter"){
+                  e.preventDefault();
+                  if(isLogin) handleLogin();
+                  else if(isForce||isChange) document.getElementById("wc-login-pwd2")?.focus();
+                }
+              }}
+            />
           </div>
-          {(isForce||isChange)&&<div style={{marginBottom:"11px"}}>
-            <div style={{color:C.muted,fontSize:"11px",marginBottom:"5px"}}>Xác nhận mật khẩu</div>
-            <input style={{...IS(),letterSpacing:"2px"}} type="password" placeholder="Nhập lại mật khẩu" value={lPwd2}
-              onChange={e=>{setLPwd2(e.target.value);setLErr("");}} onKeyDown={e=>e.key==="Enter"&&(isForce?handleForcePwd():handleChangePwd())}/>
-          </div>}
-          {lErr&&<div style={{color:C.red,fontSize:"12px",marginBottom:"10px"}}>⚠️ {lErr}</div>}
-          <div style={{display:"grid",gridTemplateColumns:isForce?"1fr":"1fr 1fr",gap:"8px"}}>
-            {!isForce&&<button style={{...BT("dim"),color:C.muted}} onClick={()=>{setLoginModal(null);setLPwd("");setLPwd2("");setLErr("");}}>Hủy</button>}
-            <button style={BT(isForce||isChange?"blue":"green")} onClick={isLogin?handleLogin:isForce?handleForcePwd:handleChangePwd}>
+
+          {/* Confirm password */}
+          {(isForce||isChange)&&(
+            <div style={{marginBottom:"16px"}}>
+              <label style={LABEL}>Xác nhận mật khẩu</label>
+              <input
+                id="wc-login-pwd2"
+                type="password"
+                style={INP({letterSpacing:"3px",fontSize:"18px"})}
+                placeholder="Nhập lại mật khẩu…"
+                value={lPwd2}
+                autoComplete="new-password"
+                onChange={e=>{setLPwd2(e.target.value);setLErr("");}}
+                onKeyDown={e=>{
+                  if(e.key==="Enter"){e.preventDefault();isForce?handleForcePwd():handleChangePwd();}
+                }}
+              />
+            </div>
+          )}
+
+          {/* Error */}
+          {lErr&&(
+            <div style={{background:C.red+"18",border:`1px solid ${C.red}55`,borderRadius:"8px",padding:"10px 13px",marginBottom:"14px",color:C.red,fontSize:"13px",fontWeight:600}}>
+              ⚠️ {lErr}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{display:"grid",gridTemplateColumns:isForce?"1fr":"1fr 1fr",gap:"10px",marginTop:"4px"}}>
+            {!isForce&&(
+              <button style={{...BT("dim"),color:C.muted,padding:"12px",fontSize:"14px"}} onClick={closeModal}>Hủy</button>
+            )}
+            <button
+              style={{...BT(isForce||isChange?"blue":"green"),padding:"13px",fontSize:"15px",fontWeight:700,fontFamily:"'Times New Roman',Times,serif"}}
+              onClick={isLogin?handleLogin:isForce?handleForcePwd:handleChangePwd}>
               {isForce?"💾 Lưu & Tiếp tục":isChange?"💾 Lưu mật khẩu":"Đăng nhập →"}
             </button>
           </div>
@@ -1083,7 +1209,7 @@ function App(){
   ];
 
   return(
-    <div style={{minHeight:"100vh",background:C.bg,color:C.text,fontFamily:"Barlow,sans-serif",fontSize:"14px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,color:C.text,fontFamily:"'Times New Roman',Times,serif",fontSize:"14px"}}>
 
       {/* HEADER */}
       <div style={{background:"#060f24",borderBottom:`2px solid #0e2a4a`,padding:"11px 16px"}}>
@@ -1112,7 +1238,7 @@ function App(){
         <div style={{maxWidth:"960px",margin:"0 auto",display:"flex"}}>
           {TABS.map(t=>(
             <button key={t.id} className="tab-btn" onClick={()=>setTab(t.id)}
-              style={{padding:"12px 13px",cursor:"pointer",color:tab===t.id?C.green:C.muted,borderBottom:`2px solid ${tab===t.id?C.green:"transparent"}`,fontWeight:600,fontSize:"12px",whiteSpace:"nowrap",background:"transparent",border:"none",fontFamily:"Barlow,sans-serif",transition:"color .15s"}}>
+              style={{padding:"12px 13px",cursor:"pointer",color:tab===t.id?C.green:C.muted,borderBottom:`2px solid ${tab===t.id?C.green:"transparent"}`,fontWeight:600,fontSize:"12px",whiteSpace:"nowrap",background:"transparent",border:"none",fontFamily:"'Times New Roman',Times,serif",transition:"color .15s"}}>
               {t.label}
               {t.id==="matches"&&todayMs.length>0&&<span style={{marginLeft:"4px",background:C.orange,color:"#000",borderRadius:"10px",padding:"0 5px",fontSize:"10px",fontWeight:700}}>{todayMs.length}</span>}
             </button>
@@ -1140,7 +1266,7 @@ function App(){
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"15px"}}>
               <div>
                 <div style={{color:C.muted,fontSize:"11px",marginBottom:"3px",textTransform:"uppercase",letterSpacing:"1px"}}>{PHASES[livePred.phase].label}{livePred.group?` · Bảng ${livePred.group}`:""}</div>
-                <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(15px,3vw,20px)"}}>{FL(livePred.home)} {livePred.home} vs {livePred.away} {FL(livePred.away)}</div>
+                <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(15px,3vw,20px)"}}><span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}><FL name={livePred.home} size={20}/> {livePred.home} vs {livePred.away} <FL name={livePred.away} size={20}/></span></div>
                 <div style={{color:C.gold,fontSize:"13px",marginTop:"2px"}}>Đặt cược: {fmt(PHASES[livePred.phase].bet)}</div>
                 {livePred.kickoff&&<div style={{color:isToday(livePred.kickoff)?C.orange:C.muted,fontSize:"12px",marginTop:"2px"}}>🕐 {fmtDT(livePred.kickoff)} (GMT+7)</div>}
               </div>
@@ -1164,12 +1290,12 @@ function App(){
               <div style={{color:C.muted,fontSize:"11px",marginBottom:"9px",textTransform:"uppercase",letterSpacing:"1px"}}>Tỷ số dự đoán</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:"9px",alignItems:"center"}}>
                 <div>
-                  <div style={{color:C.muted,fontSize:"11px",marginBottom:"4px",textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{FL(livePred.home)} {livePred.home}</div>
+                  <div style={{color:C.muted,fontSize:"11px",marginBottom:"4px",textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><span style={{display:"inline-flex",alignItems:"center",gap:"4px"}}><FL name={livePred.home} size={16}/> {livePred.home}</span></div>
                   <input style={{...IS({textAlign:"center",fontSize:"32px",fontFamily:"Bebas Neue,sans-serif",padding:"10px"})}} type="number" min="0" max="20" placeholder="0" value={pH} onChange={e=>setPH(e.target.value)}/>
                 </div>
                 <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"26px",color:C.dim,textAlign:"center",paddingTop:"18px"}}>—</div>
                 <div>
-                  <div style={{color:C.muted,fontSize:"11px",marginBottom:"4px",textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{livePred.away} {FL(livePred.away)}</div>
+                  <div style={{color:C.muted,fontSize:"11px",marginBottom:"4px",textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><span style={{display:"inline-flex",alignItems:"center",gap:"4px"}}>{livePred.away} <FL name={livePred.away} size={16}/></span></div>
                   <input style={{...IS({textAlign:"center",fontSize:"32px",fontFamily:"Bebas Neue,sans-serif",padding:"10px"})}} type="number" min="0" max="20" placeholder="0" value={pA} onChange={e=>setPA(e.target.value)}/>
                 </div>
               </div>
@@ -1190,7 +1316,7 @@ function App(){
               <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"20px",color:C.gold}}>📝 Nhập Kết Quả</div>
               <button style={{background:"transparent",border:"none",color:C.muted,fontSize:"22px",cursor:"pointer"}} onClick={()=>{setResultModal(null);setRH("");setRA("");}}>×</button>
             </div>
-            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"19px",textAlign:"center",marginBottom:"6px"}}>{FL(resultModal.home)} {resultModal.home} vs {resultModal.away} {FL(resultModal.away)}</div>
+            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"19px",textAlign:"center",marginBottom:"6px"}}><span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}><FL name={resultModal.home} size={20}/> {resultModal.home} vs {resultModal.away} <FL name={resultModal.away} size={20}/></span></div>
             {resultModal.kickoff&&<div style={{color:C.muted,fontSize:"12px",textAlign:"center",marginBottom:"13px"}}>🕐 {fmtDT(resultModal.kickoff)}</div>}
             <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:"9px",alignItems:"center",marginBottom:"15px"}}>
               <input style={{...IS({textAlign:"center",fontSize:"32px",fontFamily:"Bebas Neue,sans-serif"})}} type="number" min="0" placeholder="0" value={rH} onChange={e=>setRH(e.target.value)}/>
@@ -1274,7 +1400,7 @@ function App(){
                 <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"20px"}}>📊 Chi Tiết Trận</div>
                 <button style={{background:"transparent",border:"none",color:C.muted,fontSize:"22px",cursor:"pointer"}} onClick={()=>setDetailModal(null)}>×</button>
               </div>
-              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"21px",textAlign:"center",marginBottom:"5px"}}>{FL(liveD.home)} {liveD.home} {liveD.result?`${liveD.result.h} – ${liveD.result.a}`:"vs"} {liveD.away} {FL(liveD.away)}</div>
+              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"21px",textAlign:"center",marginBottom:"5px"}}><span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}><FL name={liveD.home} size={20}/> {liveD.home}</span> {liveD.result?`${liveD.result.h} – ${liveD.result.a}`:"vs"} <span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}>{liveD.away} <FL name={liveD.away} size={20}/></span></div>
               {liveD.kickoff&&<div style={{color:C.muted,fontSize:"12px",textAlign:"center",marginBottom:"13px"}}>🕐 {fmtDT(liveD.kickoff)} (GMT+7)</div>}
               <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"8px",marginBottom:"14px"}}>
                 {[
