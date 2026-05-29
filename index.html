@@ -30,6 +30,7 @@
     @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,82,82,.55)}50%{box-shadow:0 0 0 8px rgba(255,82,82,0)}}
     @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,152,0,.35)}50%{box-shadow:0 0 18px 5px rgba(255,152,0,.12)}}
     .mc:hover{border-color:#1e4070!important}.tab-btn:hover{color:#c8ddff!important}.pill:hover{opacity:.82}.today-card{animation:glow 2.6s ease-in-out infinite}
+    @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-33.33%)}}
     table{border-collapse:collapse;width:100%}th,td{padding:8px 10px;text-align:left;font-size:13px;font-family:'Times New Roman',Times,serif}
     th{font-weight:700;text-transform:uppercase;letter-spacing:.6px}
   </style>
@@ -133,14 +134,14 @@ function genMatches(){
 }
 
 /* ══════════════════ HELPERS ════════════════════════════════════════════════ */
-// 1 Xu = 1,000₫  →  10,000₫ = 10 Xu
-const VND_PER_XU=1000;
-const toXu=vnd=>vnd/VND_PER_XU;
+// 1 CiViet = 1,000 Đồng  →  10,000₫ = 10 CiViet
+const VND_PER_CV=1000;
+const toCv=vnd=>vnd/VND_PER_CV;
 const fmt=vnd=>{
-  const xu=toXu(Math.round(vnd));
-  // Show integer if whole, else 1 decimal
-  const s=Number.isInteger(xu)?xu.toLocaleString("vi-VN"):(xu).toLocaleString("vi-VN",{minimumFractionDigits:1,maximumFractionDigits:1});
-  return s+" Xu";
+  const cv=toCv(Math.round(vnd));
+  // Hiển thị nguyên nếu tròn, có 1 chữ số thập phân nếu lẻ
+  const s=Number.isInteger(cv)?cv.toLocaleString("vi-VN"):(cv).toLocaleString("vi-VN",{minimumFractionDigits:1,maximumFractionDigits:1});
+  return s+" CiViet";
 };
 // For Excel export: raw VND
 const fmtVND=n=>Math.round(n);
@@ -199,7 +200,7 @@ function App(){
   const [newAdmPwd,setNewAdmPwd]=useState(""), [newAdmPwd2,setNewAdmPwd2]=useState("");
   const [toast,setToast]=useState(null);
 
-  useEffect(()=>{const t=setInterval(()=>setTick(x=>x+1),60000);return()=>clearInterval(t);},[]);
+  useEffect(()=>{const t=setInterval(()=>setTick(x=>x+1),300000);return()=>clearInterval(t);},[]); // auto refresh 5 phút
 
   const persist=useCallback(d=>{setData(d);ls.set(SK,d);},[]);
   const persistPlayers=useCallback(p=>{setPlayers(p);ls.set(SK_PLY,p);},[]);
@@ -568,7 +569,7 @@ function App(){
             <button style={{...BT("dim"),color:C.blue}} onClick={e=>{e.stopPropagation();setDetailModal(m);}}>📊 Chi tiết</button>
           </div>
         )}
-        {!done&&!myP&&!adminMode&&<div style={{marginTop:"7px",color:today?C.orange:C.green,fontSize:"12px",opacity:.85,fontWeight:today?700:400}}>{today?"🔥 Nhấn để đặt cược ngay!":"Nhấn để đặt cược →"}</div>}
+        {!done&&!myP&&!adminMode&&<div style={{marginTop:"7px",color:today?C.orange:C.green,fontSize:"12px",opacity:.85,fontWeight:today?700:400}}>{today?"🔥 Nhấn để dự đoán ngay!":"Nhấn để dự đoán →"}</div>}
       </div>
     );
   }
@@ -601,7 +602,7 @@ function App(){
       <div>
         <div style={{...CS({marginBottom:"16px",background:"linear-gradient(135deg,#0c1c32,#061224)",borderColor:C.green+"55"})}}>
           <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(22px,4vw,28px)",color:C.green,letterSpacing:"2px",marginBottom:"6px"}}>📖 Hướng Dẫn & Luật Chơi</div>
-          <div style={{color:C.muted,fontSize:"13px",lineHeight:1.6}}>World Cup 2026 · Dự đoán tỷ số · {MAX_SAME} người/tỷ số · Đổi {MAX_CHG} lần · 85% thưởng · 15% quỹ</div>
+          <div style={{color:C.muted,fontSize:"13px",lineHeight:1.6,fontFamily:"'Times New Roman',Times,serif"}}>World Cup 2026 · Dự đoán tỷ số · {MAX_SAME} người/tỷ số · Đổi {MAX_CHG} lần · 85% thưởng · 15% quỹ<br/><b style={{color:C.gold}}>1 CiViet = 1.000 Đồng</b></div>
         </div>
 
         <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap"}}>
@@ -612,18 +613,18 @@ function App(){
           <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
             {[
               {icon:"1️⃣",title:"Đăng nhập lần đầu",body:`Nhấn <b style="color:${C.green}">Đăng nhập</b> → Nhập <b>tên</b> + mật khẩu mặc định <b style="color:${C.gold}">12345</b> → Hệ thống yêu cầu đổi mật khẩu mới (≥ 4 ký tự) ngay lập tức.`},
-              {icon:"2️⃣",title:"Chọn trận & đặt cược",body:`Vào tab <b>⚽ Trận Đấu</b> → Chọn vòng đấu (Vòng Bảng, 1/16, …) → Nhấn vào thẻ trận → Nhập tỷ số (VD: <b style="color:${C.gold}">2 – 1</b>) → Nhấn <b>✅ Xác nhận đặt</b>.`},
-              {icon:"3️⃣",title:"Bắt buộc tham gia",body:`Tất cả người chơi <b style="color:${C.red}">bắt buộc</b> dự đoán trước giờ đấu. Nếu quên → tự động nộp tiền phạt vào pool và quỹ (cùng mức tiền trận đó).`},
+              {icon:"2️⃣",title:"Chọn trận & dự đoán",body:`Vào tab <b>⚽ Trận Đấu</b> → Chọn vòng đấu (Vòng Bảng, 1/16, …) → Nhấn vào thẻ trận → Nhập tỷ số dự đoán (VD: <b style="color:${C.gold}">2 – 1</b>) → Nhấn <b>✅ Xác nhận dự đoán</b>.`},
+              {icon:"3️⃣",title:"Bắt buộc tham gia",body:`Tất cả người chơi <b style="color:${C.red}">bắt buộc</b> dự đoán trước giờ đấu. Nếu quên → tự động nộp phạt vào pool và quỹ bằng đúng mức CiViet của trận đó.`},
               {icon:"4️⃣",title:"Đổi dự đoán",body:`Mỗi trận được đổi tối đa <b style="color:${C.blue}">${MAX_CHG} lần</b> trước khi trận bắt đầu. Tab <b>Của Tôi</b> → nhấn <b>✏️ Đổi</b> bên cạnh trận.`},
               {icon:"5️⃣",title:"Xem kết quả",body:`Sau trận, kết quả hiện ngay trên thẻ. Tab <b>🏆 Xếp Hạng</b> cập nhật lãi/lỗ của từng người. Tab <b>👤 Của Tôi</b> xem chi tiết thống kê cá nhân.`},
-              {icon:"6️⃣",title:"Trận hôm nay",body:`Thẻ trận hôm nay viền cam + hiệu ứng nổi bật. Badge <b style="color:${C.red}">⚡ SẮP ĐÁ</b> khi còn &lt; 3 tiếng. Đặt cược trước khi hết hạn!`},
+              {icon:"6️⃣",title:"Trận hôm nay",body:`Thẻ trận hôm nay viền cam + hiệu ứng nổi bật. Badge <b style="color:${C.red}">⚡ SẮP ĐÁ</b> khi còn &lt; 3 tiếng. Dự đoán trước khi hết hạn!`},
               {icon:"7️⃣",title:"Bảo mật tài khoản",body:`Đổi mật khẩu ngay sau lần đăng nhập đầu tiên. Tab <b>Của Tôi</b> → nhấn <b>🔑 Đổi MK</b> bất cứ lúc nào.`},
             ].map((s,i)=>(
               <div key={i} style={{...CS({display:"flex",gap:"14px",alignItems:"flex-start",padding:"14px 16px"})}}>
                 <div style={{fontSize:"24px",lineHeight:1,flexShrink:0,marginTop:"2px"}}>{s.icon}</div>
                 <div>
                   <div style={{fontWeight:700,fontSize:"15px",color:C.text,marginBottom:"5px"}}>{s.title}</div>
-                  <div style={{color:C.muted,fontSize:"13px",lineHeight:1.65}} dangerouslySetInnerHTML={{__html:s.body}}/>
+                  <div style={{color:C.muted,fontSize:"13px",lineHeight:1.65,fontFamily:"'Times New Roman',Times,serif"}} dangerouslySetInnerHTML={{__html:s.body}}/>
                 </div>
               </div>
             ))}
@@ -637,8 +638,8 @@ function App(){
           <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
             {[
               {icon:"⚽",title:"Đối tượng tham gia",body:"Tất cả thành viên trong nhóm đều <b>bắt buộc</b> tham gia dự đoán mỗi trận đấu. Không tham gia = nộp phạt tự động."},
-              {icon:"🎯",title:"Cách đặt cược",body:`Mỗi người đặt <b>1 dự đoán / trận</b>. Tỷ số cụ thể (VD: 2-1). Tối đa <b style="color:${C.red}">${MAX_SAME} người</b> được đặt cùng một tỷ số. Khi đủ ${MAX_SAME} người → tỷ số đó bị khóa 🚫.`},
-              {icon:"⏰",title:"Thời hạn đặt cược",body:"Phải đặt cược <b>trước giờ đá</b> (tính theo GMT+7). Sau khi trận bắt đầu → hệ thống khóa, không đặt được nữa."},
+              {icon:"🎯",title:"Cách dự đoán",body:`Mỗi người dự đoán <b>1 tỷ số / trận</b>. Ví dụ: 2-1. Tối đa <b style="color:${C.red}">${MAX_SAME} người</b> được chọn cùng một tỷ số. Khi đủ ${MAX_SAME} người → tỷ số đó bị khóa 🚫.`},
+              {icon:"⏰",title:"Thời hạn dự đoán",body:"Phải dự đoán <b>trước giờ đá</b> (tính theo GMT+7). Sau khi trận bắt đầu → hệ thống tự khóa, không dự đoán được nữa."},
               {icon:"✏️",title:"Quy tắc đổi dự đoán",body:`Được đổi tối đa <b style="color:${C.blue}">${MAX_CHG} lần</b> trước khi trận đá. Tỷ số mới <b>đè lên</b> tỷ số cũ. Khi đổi, tỷ số mới cũng bị giới hạn ${MAX_SAME} người.`},
               {icon:"⚠️",title:"Phạt khi bỏ lỡ",body:`Thành viên không dự đoán trước giờ đá → tự động bị trừ <b style="color:${C.red}">đúng bằng mức cược</b> của trận đó vào quỹ thưởng. Tiền phạt phân chia theo tỷ lệ 85%/15% như bình thường.`},
               {icon:"📊",title:"Tính kết quả",body:"Chỉ tính tỷ số trong <b>90 phút chính thức</b> (không tính hiệp phụ, không tính đá penalty). Quản trị viên nhập kết quả thực tế sau trận."},
@@ -648,7 +649,7 @@ function App(){
                 <div style={{fontSize:"24px",lineHeight:1,flexShrink:0,marginTop:"2px"}}>{s.icon}</div>
                 <div>
                   <div style={{fontWeight:700,fontSize:"15px",color:C.text,marginBottom:"5px"}}>{s.title}</div>
-                  <div style={{color:C.muted,fontSize:"13px",lineHeight:1.65}} dangerouslySetInnerHTML={{__html:s.body}}/>
+                  <div style={{color:C.muted,fontSize:"13px",lineHeight:1.65,fontFamily:"'Times New Roman',Times,serif"}} dangerouslySetInnerHTML={{__html:s.body}}/>
                 </div>
               </div>
             ))}
@@ -659,7 +660,7 @@ function App(){
           <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
             <div style={{...CS({borderColor:C.gold+"44",background:C.gold+"08"})}}>
               <div style={{fontWeight:700,color:C.gold,fontSize:"15px",marginBottom:"12px"}}>💰 Mức Tiền Cược</div>
-              {[["Vòng Bảng","10.000₫"],["Vòng 1/16 → Bán Kết","20.000₫"],["Tranh Hạng Ba","50.000₫"],["Chung Kết","100.000₫"]].map(([v,p])=>(
+              {[["Vòng Bảng","10 CiViet (10.000₫)"],["Vòng 1/16 → Bán Kết","20 CiViet (20.000₫)"],["Tranh Hạng Ba","50 CiViet (50.000₫)"],["Chung Kết","100 CiViet (100.000₫)"]].map(([v,p])=>(
                 <div key={v} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${C.border}`}}>
                   <span style={{color:C.muted,fontSize:"13px"}}>{v}</span>
                   <b style={{color:C.gold,fontSize:"14px"}}>{p}</b>
@@ -672,13 +673,13 @@ function App(){
               {icon:"💵",title:"Phân chia thưởng",body:`<b style="color:${C.green}">85%</b> pool → Chia đều cho <b>tất cả người đoán đúng tỷ số chính xác</b>. <b style="color:${C.red}">15%</b> pool → Vào <b>quỹ chung</b> của nhóm.`},
               {icon:"🎰",title:"Không ai đúng",body:`Nếu không ai đoán đúng → <b style="color:${C.orange}">toàn bộ 100% pool</b> vào quỹ chung (không hoàn tiền).`},
               {icon:"⚠️",title:"Tiền phạt bỏ lỡ",body:`Người không dự đoán → mất tiền cược của trận đó. Tiền này cộng vào pool trước khi chia 85%/15%. Không được hoàn trả.`},
-              {icon:"📈",title:"Ví dụ tính thưởng",body:`10 người chơi, 1 người bỏ lỡ, 2 người đoán đúng trận Vòng Bảng:<br/>Pool = 10 × 10.000 = 100.000₫<br/>Thưởng (85%) = 85.000₫ → mỗi người đúng nhận <b style="color:${C.gold}">42.500₫</b><br/>Quỹ chung (15%) = 15.000₫`},
+              {icon:"📈",title:"Ví dụ tính thưởng",body:`10 người chơi, 1 người bỏ lỡ, 2 người đoán đúng trận Vòng Bảng:<br/>Pool = 10 × 10 CiViet = 100 CiViet (100.000₫)<br/>Thưởng (85%) = 85 CiViet → mỗi người đúng nhận <b style="color:${C.gold}">42,5 CiViet</b><br/>Quỹ chung (15%) = 15 CiViet`},
             ].map((s,i)=>(
               <div key={i} style={{...CS({display:"flex",gap:"14px",alignItems:"flex-start",padding:"14px 16px"})}}>
                 <div style={{fontSize:"24px",lineHeight:1,flexShrink:0,marginTop:"2px"}}>{s.icon}</div>
                 <div>
                   <div style={{fontWeight:700,fontSize:"15px",color:C.text,marginBottom:"5px"}}>{s.title}</div>
-                  <div style={{color:C.muted,fontSize:"13px",lineHeight:1.65}} dangerouslySetInnerHTML={{__html:s.body}}/>
+                  <div style={{color:C.muted,fontSize:"13px",lineHeight:1.65,fontFamily:"'Times New Roman',Times,serif"}} dangerouslySetInnerHTML={{__html:s.body}}/>
                 </div>
               </div>
             ))}
@@ -1054,23 +1055,60 @@ function App(){
   }
 
   /* ══════════════════ LOGIN MODAL ════════════════════════════════════════ */
+  // Dùng uncontrolled inputs + refs để KHÔNG re-render khi gõ → hết giật/nhảy
   function LoginModal(){
     if(!loginModal)return null;
     const{mode}=loginModal;
     const isForce=mode==="forcepwd", isChange=mode==="changepwd", isLogin=mode==="login";
-
-    // Registered player names for autocomplete datalist
     const knownNames=Object.values(players).map(p=>p.name);
 
+    // Refs để đọc giá trị mà không setState mỗi keystroke
+    const refName=useRef(null);
+    const refPwd =useRef(null);
+    const refPwd2=useRef(null);
+
     function closeModal(){
-      if(isForce)return; // force-change cannot be dismissed
-      setLoginModal(null);setLPwd("");setLPwd2("");setLErr("");
+      if(isForce)return;
+      setLoginModal(null);setLErr("");
     }
 
-    // Shared input style — large, readable, no autocomplete artifacts
+    function doSubmit(){
+      // Lấy giá trị trực tiếp từ DOM
+      const nm =(refName.current?.value||"").trim();
+      const pwd= refPwd.current?.value||"";
+      const pwd2=refPwd2.current?.value||"";
+      if(isLogin){
+        if(!nm){setLErr("Nhập tên của bạn");return;}
+        if(!pwd){setLErr("Nhập mật khẩu");return;}
+        if(!isRegistered(nm)){
+          if(pwd!==DEFAULT_PWD){setLErr("Lần đầu dùng mật khẩu mặc định: "+DEFAULT_PWD);return;}
+          const np={...players,[nm.toLowerCase()]:{name:nm,pwd:DEFAULT_PWD,mustChange:true,joinedAt:Date.now()}};
+          persistPlayers(np);saveSession(nm);
+          setLoginModal({mode:"forcepwd",name:nm});setLErr("");return;
+        }
+        const p=getPlayer(nm);
+        if(p.pwd!==pwd){setLErr("Sai mật khẩu!");return;}
+        saveSession(nm);
+        if(p.mustChange){setLoginModal({mode:"forcepwd",name:nm});setLErr("");return;}
+        setLoginModal(null);setLErr("");
+        showT("✅ Chào "+nm+"!");
+        if(loginModal?.next) loginModal.next(nm);
+      } else if(isForce||isChange){
+        if(pwd.length<4){setLErr("Mật khẩu ≥ 4 ký tự");return;}
+        if(pwd!==pwd2){setLErr("Mật khẩu không khớp");return;}
+        if(pwd===DEFAULT_PWD){setLErr("Chọn mật khẩu khác "+DEFAULT_PWD);return;}
+        const nm2=isChange?curUser:loginModal.name;
+        persistPlayers({...players,[nm2.toLowerCase()]:{...getPlayer(nm2),pwd:pwd,mustChange:false}});
+        setLoginModal(null);setLErr("");
+        showT(isChange?"✅ Mật khẩu đã cập nhật!":"✅ Mật khẩu đã đổi. Chào mừng!");
+        if(loginModal?.next) loginModal.next(nm2);
+      }
+    }
+
+    // Style input — KHÔNG dùng value/onChange để tránh re-render
     const INP=(extra={})=>({
       background:"#0a1929",
-      border:`2px solid ${C.border}`,
+      border:"2px solid "+C.border,
       borderRadius:"10px",
       color:"#ffffff",
       padding:"13px 16px",
@@ -1078,17 +1116,19 @@ function App(){
       fontSize:"16px",
       width:"100%",
       outline:"none",
-      transition:"border-color .15s",
+      WebkitBoxShadow:"0 0 0 1000px #0a1929 inset",
+      WebkitTextFillColor:"#ffffff",
+      caretColor:"#ffffff",
       ...extra,
     });
-    const LABEL={color:C.muted,fontSize:"13px",fontWeight:600,marginBottom:"6px",display:"block"};
+    const LABEL={color:C.muted,fontSize:"13px",fontWeight:600,marginBottom:"6px",display:"block",fontFamily:"'Times New Roman',Times,serif"};
 
     return(
       <div style={OV} onClick={closeModal}>
-        <div style={MD({maxWidth:"400px",padding:"24px"})} onClick={e=>e.stopPropagation()}>
+        <div style={MD({maxWidth:"420px",padding:"26px"})} onClick={e=>e.stopPropagation()}>
 
           {/* Header */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"22px"}}>
             <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"26px",color:isForce||isChange?C.blue:C.green,letterSpacing:"1px"}}>
               {isForce?"🔑 ĐỔI MẬT KHẨU LẦN ĐẦU":isChange?"🔑 ĐỔI MẬT KHẨU":"👤 ĐĂNG NHẬP"}
             </div>
@@ -1099,54 +1139,50 @@ function App(){
 
           {/* Force-change banner */}
           {isForce&&(
-            <div style={{background:C.gold+"15",border:`1px solid ${C.gold}44`,borderRadius:"10px",padding:"12px 14px",marginBottom:"18px",fontSize:"13px",color:C.muted,lineHeight:1.7}}>
+            <div style={{background:C.gold+"15",border:"1px solid "+C.gold+"44",borderRadius:"10px",padding:"12px 14px",marginBottom:"18px",fontSize:"13px",color:C.muted,lineHeight:1.7,fontFamily:"'Times New Roman',Times,serif"}}>
               ⚠️ Bạn đang dùng mật khẩu mặc định <b style={{color:C.gold,fontSize:"15px"}}>{DEFAULT_PWD}</b>.<br/>
               Hãy đặt mật khẩu riêng để bảo vệ tài khoản <b style={{color:C.text}}>{loginModal.name}</b>.
             </div>
           )}
 
-          {/* Name field — only for login */}
+          {/* Name field */}
           {isLogin&&(
-            <div style={{marginBottom:"16px"}}>
+            <div style={{marginBottom:"18px"}}>
               <label style={LABEL}>Tên của bạn</label>
-              {/* datalist provides autocomplete suggestions without forcing a selection */}
-              <datalist id="wc-names">
+              <datalist id="wc-names-list">
                 {knownNames.map(n=><option key={n} value={n}/>)}
               </datalist>
               <input
-                id="wc-login-name"
-                list="wc-names"
+                ref={refName}
+                list="wc-names-list"
+                defaultValue=""
                 style={INP()}
                 placeholder="Nhập tên đầy đủ của bạn…"
-                value={lName}
-                autoComplete="name"
-                autoFocus
-                onChange={e=>{setLName(e.target.value);setLErr("");}}
-                onKeyDown={e=>{ if(e.key==="Enter"){e.preventDefault();document.getElementById("wc-login-pwd")?.focus();} }}
+                autoComplete="username"
+                onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();refPwd.current?.focus();}}}
               />
-              <div style={{color:C.muted,fontSize:"12px",marginTop:"6px"}}>
-                💡 Lần đầu đăng nhập dùng mật khẩu mặc định: <b style={{color:C.gold,fontSize:"13px"}}>{DEFAULT_PWD}</b>
+              <div style={{color:C.muted,fontSize:"12px",marginTop:"7px",fontFamily:"'Times New Roman',Times,serif"}}>
+                💡 Lần đầu dùng mật khẩu mặc định: <b style={{color:C.gold,fontSize:"13px"}}>{DEFAULT_PWD}</b>
               </div>
             </div>
           )}
 
-          {/* Password field */}
-          <div style={{marginBottom:"16px"}}>
+          {/* Password */}
+          <div style={{marginBottom:"18px"}}>
             <label style={LABEL}>{isLogin?"Mật khẩu":"Mật khẩu mới (tối thiểu 4 ký tự)"}</label>
             <input
-              id="wc-login-pwd"
+              ref={refPwd}
               type="password"
-              style={INP({letterSpacing:"3px",fontSize:"18px"})}
-              placeholder={isLogin?"Nhập mật khẩu":"Mật khẩu mới…"}
-              value={lPwd}
+              defaultValue=""
+              style={INP({letterSpacing:"4px",fontSize:"20px"})}
+              placeholder={isLogin?"••••••••":"Mật khẩu mới…"}
               autoComplete={isLogin?"current-password":"new-password"}
               autoFocus={isForce||isChange}
-              onChange={e=>{setLPwd(e.target.value);setLErr("");}}
               onKeyDown={e=>{
                 if(e.key==="Enter"){
                   e.preventDefault();
-                  if(isLogin) handleLogin();
-                  else if(isForce||isChange) document.getElementById("wc-login-pwd2")?.focus();
+                  if(isLogin) doSubmit();
+                  else refPwd2.current?.focus();
                 }
               }}
             />
@@ -1154,38 +1190,35 @@ function App(){
 
           {/* Confirm password */}
           {(isForce||isChange)&&(
-            <div style={{marginBottom:"16px"}}>
+            <div style={{marginBottom:"18px"}}>
               <label style={LABEL}>Xác nhận mật khẩu</label>
               <input
-                id="wc-login-pwd2"
+                ref={refPwd2}
                 type="password"
-                style={INP({letterSpacing:"3px",fontSize:"18px"})}
+                defaultValue=""
+                style={INP({letterSpacing:"4px",fontSize:"20px"})}
                 placeholder="Nhập lại mật khẩu…"
-                value={lPwd2}
                 autoComplete="new-password"
-                onChange={e=>{setLPwd2(e.target.value);setLErr("");}}
-                onKeyDown={e=>{
-                  if(e.key==="Enter"){e.preventDefault();isForce?handleForcePwd():handleChangePwd();}
-                }}
+                onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();doSubmit();}}}
               />
             </div>
           )}
 
           {/* Error */}
           {lErr&&(
-            <div style={{background:C.red+"18",border:`1px solid ${C.red}55`,borderRadius:"8px",padding:"10px 13px",marginBottom:"14px",color:C.red,fontSize:"13px",fontWeight:600}}>
+            <div style={{background:C.red+"18",border:"1px solid "+C.red+"55",borderRadius:"8px",padding:"11px 14px",marginBottom:"16px",color:C.red,fontSize:"14px",fontWeight:600,fontFamily:"'Times New Roman',Times,serif"}}>
               ⚠️ {lErr}
             </div>
           )}
 
           {/* Actions */}
-          <div style={{display:"grid",gridTemplateColumns:isForce?"1fr":"1fr 1fr",gap:"10px",marginTop:"4px"}}>
+          <div style={{display:"grid",gridTemplateColumns:isForce?"1fr":"1fr 1fr",gap:"12px"}}>
             {!isForce&&(
-              <button style={{...BT("dim"),color:C.muted,padding:"12px",fontSize:"14px"}} onClick={closeModal}>Hủy</button>
+              <button style={{...BT("dim"),color:C.muted,padding:"13px",fontSize:"14px",fontFamily:"'Times New Roman',Times,serif"}} onClick={closeModal}>Hủy</button>
             )}
             <button
-              style={{...BT(isForce||isChange?"blue":"green"),padding:"13px",fontSize:"15px",fontWeight:700,fontFamily:"'Times New Roman',Times,serif"}}
-              onClick={isLogin?handleLogin:isForce?handleForcePwd:handleChangePwd}>
+              style={{...BT(isForce||isChange?"blue":"green"),padding:"14px",fontSize:"16px",fontWeight:700,fontFamily:"'Times New Roman',Times,serif"}}
+              onClick={doSubmit}>
               {isForce?"💾 Lưu & Tiếp tục":isChange?"💾 Lưu mật khẩu":"Đăng nhập →"}
             </button>
           </div>
@@ -1233,6 +1266,22 @@ function App(){
         </div>
       </div>
 
+      {/* MARQUEE BANNER */}
+      <div style={{background:"#0a0000",borderBottom:"2px solid #ff0000",overflow:"hidden",padding:"7px 0"}}>
+        <div style={{
+          display:"inline-block",
+          whiteSpace:"nowrap",
+          animation:"marquee 22s linear infinite",
+          color:"#ff3333",
+          fontWeight:700,
+          fontSize:"clamp(12px,2vw,15px)",
+          fontFamily:"'Times New Roman',Times,serif",
+          letterSpacing:"0.5px",
+        }}>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⚠️&nbsp;ĐÂY KHÔNG PHẢI LÀ ỨNG DỤNG CÁ CƯỢC &nbsp;·&nbsp; ỨNG DỤNG CHỈ ĐỂ DÙNG NỘI BỘ DỰ ĐOÁN GIẢI TRÍ VUI VẺ!&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⚠️&nbsp;ĐÂY KHÔNG PHẢI LÀ ỨNG DỤNG CÁ CƯỢC &nbsp;·&nbsp; ỨNG DỤNG CHỈ ĐỂ DÙNG NỘI BỘ DỰ ĐOÁN GIẢI TRÍ VUI VẺ!&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⚠️&nbsp;ĐÂY KHÔNG PHẢI LÀ ỨNG DỤNG CÁ CƯỢC &nbsp;·&nbsp; ỨNG DỤNG CHỈ ĐỂ DÙNG NỘI BỘ DỰ ĐOÁN GIẢI TRÍ VUI VẺ!
+        </div>
+      </div>
+
       {/* TABS */}
       <div style={{background:C.sur,borderBottom:`1px solid ${C.border}`,overflowX:"auto"}}>
         <div style={{maxWidth:"960px",margin:"0 auto",display:"flex"}}>
@@ -1267,7 +1316,7 @@ function App(){
               <div>
                 <div style={{color:C.muted,fontSize:"11px",marginBottom:"3px",textTransform:"uppercase",letterSpacing:"1px"}}>{PHASES[livePred.phase].label}{livePred.group?` · Bảng ${livePred.group}`:""}</div>
                 <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(15px,3vw,20px)"}}><span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}><FL name={livePred.home} size={20}/> {livePred.home} vs {livePred.away} <FL name={livePred.away} size={20}/></span></div>
-                <div style={{color:C.gold,fontSize:"13px",marginTop:"2px"}}>Đặt cược: {fmt(PHASES[livePred.phase].bet)}</div>
+                <div style={{color:C.gold,fontSize:"13px",marginTop:"2px"}}>Mức dự đoán: {fmt(PHASES[livePred.phase].bet)}</div>
                 {livePred.kickoff&&<div style={{color:isToday(livePred.kickoff)?C.orange:C.muted,fontSize:"12px",marginTop:"2px"}}>🕐 {fmtDT(livePred.kickoff)} (GMT+7)</div>}
               </div>
               <button style={{background:"transparent",border:"none",color:C.muted,fontSize:"22px",cursor:"pointer",lineHeight:1}} onClick={()=>{setPredModal(null);setPH("");setPA("");}}>×</button>
@@ -1302,7 +1351,7 @@ function App(){
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
               <button style={{...BT("dim"),color:C.muted}} onClick={()=>{setPredModal(null);setPH("");setPA("");}}>Hủy</button>
-              <button style={BT("green")} onClick={doPred}>{myExisting?"✏️ Cập nhật":"✅ Xác nhận đặt"}</button>
+              <button style={BT("green")} onClick={doPred}>{myExisting?"✏️ Cập nhật":"✅ Xác nhận dự đoán"}</button>
             </div>
           </div>
         </div>
