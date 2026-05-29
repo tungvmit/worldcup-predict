@@ -67,4 +67,4 @@ worldcup-predict/
 
 ---
 
-**Phát triển bởi:** tungvmit | 2026
+**Phát triển bởi:** @TungVuM | 2026
