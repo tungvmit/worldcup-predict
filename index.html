@@ -520,13 +520,13 @@ function App(){
         </div>}
 
         <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",gap:"8px",marginBottom:"10px"}}>
-          <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(13px,3vw,20px)",lineHeight:1.1,display:"flex",alignItems:"center",gap:"5px"}}>
+          <span style={{fontFamily:"Bebas Neue,time new roman",fontSize:"clamp(13px,3vw,20px)",lineHeight:1.1,display:"flex",alignItems:"center",gap:"5px"}}>
             <FL name={m.home} size={22}/> {m.home}
           </span>
-          <span style={{textAlign:"center",fontFamily:"Bebas Neue,sans-serif",fontSize:done?"clamp(22px,4vw,30px)":"clamp(18px,3vw,24px)",color:done?C.gold:C.dim,padding:"0 6px",minWidth:"70px"}}>
+          <span style={{textAlign:"center",fontFamily:"Bebas Neue,time new roman",fontSize:done?"clamp(22px,4vw,30px)":"clamp(18px,3vw,24px)",color:done?C.gold:C.dim,padding:"0 6px",minWidth:"70px"}}>
             {done?`${m.result.h} – ${m.result.a}`:"VS"}
           </span>
-          <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(13px,3vw,20px)",lineHeight:1.1,textAlign:"right",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:"5px"}}>
+          <span style={{fontFamily:"Bebas Neue,time new roman",fontSize:"clamp(13px,3vw,20px)",lineHeight:1.1,textAlign:"right",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:"5px"}}>
             {m.away} <FL name={m.away} size={22}/>
           </span>
         </div>
@@ -544,7 +544,7 @@ function App(){
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <span style={{color:C.muted,fontSize:"12px"}}>Dự đoán của bạn</span>
               <div style={{display:"flex",gap:"10px",alignItems:"center"}}>
-                <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"20px",color:isW?C.gold:today?C.orange:C.green}}>{myP.h}–{myP.a}</span>
+                <span style={{fontFamily:"Bebas Neue,time new roman",fontSize:"20px",color:isW?C.gold:today?C.orange:C.green}}>{myP.h}–{myP.a}</span>
                 {isW&&<span style={{color:C.gold,fontWeight:700,fontSize:"13px"}}>+{fmt(st.perW)} 🥇</span>}
                 {done&&!isW&&<span style={{color:C.red,fontSize:"12px"}}>❌</span>}
               </div>
@@ -600,7 +600,7 @@ function App(){
     return(
       <div>
         <div style={{...CS({marginBottom:"16px",background:"linear-gradient(135deg,#0c1c32,#061224)",borderColor:C.green+"55"})}}>
-          <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(22px,4vw,28px)",color:C.green,letterSpacing:"2px",marginBottom:"6px"}}>📖 Hướng Dẫn & Luật Chơi</div>
+          <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"clamp(22px,4vw,28px)",color:C.green,letterSpacing:"2px",marginBottom:"6px"}}>📖 Hướng Dẫn & Luật Chơi</div>
           <div style={{color:C.muted,fontSize:"13px",lineHeight:1.6}}>World Cup 2026 · Dự đoán tỷ số · {MAX_SAME} người/tỷ số · Đổi {MAX_CHG} lần · 85% thưởng · 15% quỹ</div>
         </div>
 
