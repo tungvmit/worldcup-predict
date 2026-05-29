@@ -18,7 +18,7 @@
 | Vòng | Mức cược |
 |------|----------|
 | Vòng Bảng | 10 Xu |
-| Vòng 1/16, 1/8, Tứ Kết, Bán Kết | 20.000 ₫ |
+| Vòng 1/16, 1/8, Tứ Kết, Bán Kết | 20 Xu |
 | Tranh Hạng Ba | 50 Xu |
 | Chung Kết | 100 Xu |
 
