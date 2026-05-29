@@ -17,10 +17,10 @@
 
 | Vòng | Mức cược |
 |------|----------|
-| Vòng Bảng | 10.000 ₫ |
+| Vòng Bảng | 10 Xu |
 | Vòng 1/16, 1/8, Tứ Kết, Bán Kết | 20.000 ₫ |
-| Tranh Hạng Ba | 50.000 ₫ |
-| Chung Kết | 100.000 ₫ |
+| Tranh Hạng Ba | 50 Xu |
+| Chung Kết | 100 Xu |
 
 ## 📊 Phân Chia Tiền Thưởng
 
@@ -30,9 +30,9 @@
 
 ## 🔑 Tài Khoản Quản Trị
 
-- Mật khẩu mặc định: **`admin2026`**
+- Mật khẩu mặc định: **`12345`**
 - Chức năng: nhập kết quả, sửa tên đội, xem chi tiết từng trận, xóa dự đoán
-- Để đổi mật khẩu: sửa dòng `const ADMIN_PWD = "admin2026"` trong `index.html`
+- Để đổi mật khẩu: sửa dòng `const ADMIN_PWD = "12345"` trong `index.html`
 
 ## ⚠️ Lưu Ý Về Dữ Liệu
 
@@ -67,4 +67,4 @@ worldcup-predict/
 
 ---
 
-**Phát triển bởi:** tungvmit | 2026
+**Phát triển bởi:** TungVuM | 2026
