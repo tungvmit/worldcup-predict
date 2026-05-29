@@ -1089,7 +1089,7 @@ function App(){
 
           {/* Header */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"26px",color:isForce||isChange?C.blue:C.green,letterSpacing:"1px"}}>
+            <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"26px",color:isForce||isChange?C.blue:C.green,letterSpacing:"1px"}}>
               {isForce?"🔑 ĐỔI MẬT KHẨU LẦN ĐẦU":isChange?"🔑 ĐỔI MẬT KHẨU":"👤 ĐĂNG NHẬP"}
             </div>
             {!isForce&&(
@@ -1266,7 +1266,7 @@ function App(){
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"15px"}}>
               <div>
                 <div style={{color:C.muted,fontSize:"11px",marginBottom:"3px",textTransform:"uppercase",letterSpacing:"1px"}}>{PHASES[livePred.phase].label}{livePred.group?` · Bảng ${livePred.group}`:""}</div>
-                <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(15px,3vw,20px)"}}><span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}><FL name={livePred.home} size={20}/> {livePred.home} vs {livePred.away} <FL name={livePred.away} size={20}/></span></div>
+                <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"clamp(15px,3vw,20px)"}}><span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}><FL name={livePred.home} size={20}/> {livePred.home} vs {livePred.away} <FL name={livePred.away} size={20}/></span></div>
                 <div style={{color:C.gold,fontSize:"13px",marginTop:"2px"}}>Đặt cược: {fmt(PHASES[livePred.phase].bet)}</div>
                 {livePred.kickoff&&<div style={{color:isToday(livePred.kickoff)?C.orange:C.muted,fontSize:"12px",marginTop:"2px"}}>🕐 {fmtDT(livePred.kickoff)} (GMT+7)</div>}
               </div>
@@ -1274,7 +1274,7 @@ function App(){
             </div>
             {myExisting&&<div style={{background:C.blue+"10",border:`1px solid ${C.blue}30`,borderRadius:"8px",padding:"9px 12px",marginBottom:"13px",fontSize:"12px"}}>
               <div style={{color:C.blue,fontWeight:700,marginBottom:"3px"}}>✏️ Đổi dự đoán</div>
-              <div style={{color:C.muted}}>Hiện tại: <b style={{color:C.text,fontFamily:"Bebas Neue,sans-serif",fontSize:"16px"}}>{myExisting.h}–{myExisting.a}</b> · Còn <b style={{color:C.blue}}>{MAX_CHG-(myExisting.changes||0)}</b>/{MAX_CHG} lần</div>
+              <div style={{color:C.muted}}>Hiện tại: <b style={{color:C.text,fontFamily:"Bebas Neue,time new roman",fontSize:"16px"}}>{myExisting.h}–{myExisting.a}</b> · Còn <b style={{color:C.blue}}>{MAX_CHG-(myExisting.changes||0)}</b>/{MAX_CHG} lần</div>
             </div>}
             {Object.keys(scoreCounts).length>0&&<div style={{marginBottom:"13px",background:C.sur,borderRadius:"8px",padding:"11px"}}>
               <div style={{color:C.muted,fontSize:"11px",marginBottom:"7px",textTransform:"uppercase",letterSpacing:"1px"}}>Tỷ số đã có người đặt</div>
@@ -1293,10 +1293,10 @@ function App(){
                   <div style={{color:C.muted,fontSize:"11px",marginBottom:"4px",textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><span style={{display:"inline-flex",alignItems:"center",gap:"4px"}}><FL name={livePred.home} size={16}/> {livePred.home}</span></div>
                   <input style={{...IS({textAlign:"center",fontSize:"32px",fontFamily:"Bebas Neue,sans-serif",padding:"10px"})}} type="number" min="0" max="20" placeholder="0" value={pH} onChange={e=>setPH(e.target.value)}/>
                 </div>
-                <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"26px",color:C.dim,textAlign:"center",paddingTop:"18px"}}>—</div>
+                <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"26px",color:C.dim,textAlign:"center",paddingTop:"18px"}}>—</div>
                 <div>
                   <div style={{color:C.muted,fontSize:"11px",marginBottom:"4px",textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><span style={{display:"inline-flex",alignItems:"center",gap:"4px"}}>{livePred.away} <FL name={livePred.away} size={16}/></span></div>
-                  <input style={{...IS({textAlign:"center",fontSize:"32px",fontFamily:"Bebas Neue,sans-serif",padding:"10px"})}} type="number" min="0" max="20" placeholder="0" value={pA} onChange={e=>setPA(e.target.value)}/>
+                  <input style={{...IS({textAlign:"center",fontSize:"32px",fontFamily:"Bebas Neue,time new roman",padding:"10px"})}} type="number" min="0" max="20" placeholder="0" value={pA} onChange={e=>setPA(e.target.value)}/>
                 </div>
               </div>
             </div>
@@ -1313,14 +1313,14 @@ function App(){
         <div style={OV} onClick={()=>{setResultModal(null);setRH("");setRA("");}}>
           <div style={MD()} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"15px"}}>
-              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"20px",color:C.gold}}>📝 Nhập Kết Quả</div>
+              <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"20px",color:C.gold}}>📝 Nhập Kết Quả</div>
               <button style={{background:"transparent",border:"none",color:C.muted,fontSize:"22px",cursor:"pointer"}} onClick={()=>{setResultModal(null);setRH("");setRA("");}}>×</button>
             </div>
-            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"19px",textAlign:"center",marginBottom:"6px"}}><span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}><FL name={resultModal.home} size={20}/> {resultModal.home} vs {resultModal.away} <FL name={resultModal.away} size={20}/></span></div>
+            <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"19px",textAlign:"center",marginBottom:"6px"}}><span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}><FL name={resultModal.home} size={20}/> {resultModal.home} vs {resultModal.away} <FL name={resultModal.away} size={20}/></span></div>
             {resultModal.kickoff&&<div style={{color:C.muted,fontSize:"12px",textAlign:"center",marginBottom:"13px"}}>🕐 {fmtDT(resultModal.kickoff)}</div>}
             <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:"9px",alignItems:"center",marginBottom:"15px"}}>
               <input style={{...IS({textAlign:"center",fontSize:"32px",fontFamily:"Bebas Neue,sans-serif"})}} type="number" min="0" placeholder="0" value={rH} onChange={e=>setRH(e.target.value)}/>
-              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"26px",color:C.dim,textAlign:"center"}}>—</div>
+              <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"26px",color:C.dim,textAlign:"center"}}>—</div>
               <input style={{...IS({textAlign:"center",fontSize:"32px",fontFamily:"Bebas Neue,sans-serif"})}} type="number" min="0" placeholder="0" value={rA} onChange={e=>setRA(e.target.value)}/>
             </div>
             {rH!==""&&rA!==""&&!isNaN(parseInt(rH))&&!isNaN(parseInt(rA))&&(()=>{
@@ -1345,7 +1345,7 @@ function App(){
         <div style={OV} onClick={()=>setEditTeamModal(null)}>
           <div style={MD({maxWidth:"360px"})} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"15px"}}>
-              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"20px",color:C.blue}}>✏️ Sửa Tên Đội</div>
+              <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"20px",color:C.blue}}>✏️ Sửa Tên Đội</div>
               <button style={{background:"transparent",border:"none",color:C.muted,fontSize:"22px",cursor:"pointer"}} onClick={()=>setEditTeamModal(null)}>×</button>
             </div>
             <div style={{marginBottom:"11px"}}>
@@ -1369,7 +1369,7 @@ function App(){
         <div style={OV} onClick={()=>setAdmChangePwdModal(false)}>
           <div style={MD({maxWidth:"360px"})} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"15px"}}>
-              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"20px",color:C.gold}}>🔐 Đổi MK Quản Trị</div>
+              <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"20px",color:C.gold}}>🔐 Đổi MK Quản Trị</div>
               <button style={{background:"transparent",border:"none",color:C.muted,fontSize:"22px",cursor:"pointer"}} onClick={()=>setAdmChangePwdModal(false)}>×</button>
             </div>
             <div style={{marginBottom:"11px"}}>
@@ -1397,10 +1397,10 @@ function App(){
           <div style={OV} onClick={()=>setDetailModal(null)}>
             <div style={MD({maxWidth:"500px",maxHeight:"88vh",overflowY:"auto"})} onClick={e=>e.stopPropagation()}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"15px"}}>
-                <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"20px"}}>📊 Chi Tiết Trận</div>
+                <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"20px"}}>📊 Chi Tiết Trận</div>
                 <button style={{background:"transparent",border:"none",color:C.muted,fontSize:"22px",cursor:"pointer"}} onClick={()=>setDetailModal(null)}>×</button>
               </div>
-              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"21px",textAlign:"center",marginBottom:"5px"}}><span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}><FL name={liveD.home} size={20}/> {liveD.home}</span> {liveD.result?`${liveD.result.h} – ${liveD.result.a}`:"vs"} <span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}>{liveD.away} <FL name={liveD.away} size={20}/></span></div>
+              <div style={{fontFamily:"Bebas Neue,time new roman",fontSize:"21px",textAlign:"center",marginBottom:"5px"}}><span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}><FL name={liveD.home} size={20}/> {liveD.home}</span> {liveD.result?`${liveD.result.h} – ${liveD.result.a}`:"vs"} <span style={{display:"inline-flex",alignItems:"center",gap:"5px"}}>{liveD.away} <FL name={liveD.away} size={20}/></span></div>
               {liveD.kickoff&&<div style={{color:C.muted,fontSize:"12px",textAlign:"center",marginBottom:"13px"}}>🕐 {fmtDT(liveD.kickoff)} (GMT+7)</div>}
               <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"8px",marginBottom:"14px"}}>
                 {[
@@ -1430,7 +1430,7 @@ function App(){
                       <div><span style={{fontWeight:600}}>{p.name}</span>{p.changes>0&&<span style={{color:C.orange,fontSize:"11px",marginLeft:"5px"}}>↺{p.changes}x</span>}</div>
                     </div>
                     <div style={{display:"flex",alignItems:"center",gap:"9px"}}>
-                      <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"18px",color:isW?C.gold:C.text}}>{p.h}–{p.a}</span>
+                      <span style={{fontFamily:"Bebas Neue,time new roman",fontSize:"18px",color:isW?C.gold:C.text}}>{p.h}–{p.a}</span>
                       {isW&&<span style={{color:C.gold,fontWeight:700,fontSize:"12px"}}>+{fmt(ms.perW)}</span>}
                       {admUnlocked&&<button style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:"5px",color:C.red,fontSize:"11px",cursor:"pointer",padding:"2px 7px"}}
                         onClick={()=>{doDelPred(liveD.id,p.name);setDetailModal({...liveD,preds:liveD.preds.filter(x=>x.name!==p.name)});}}>xóa</button>}
